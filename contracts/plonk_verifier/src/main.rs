@@ -4,20 +4,24 @@
 //! See `entry.rs` for the `main` function.
 //! See `error.rs` for the `Error` type.
 
-#![no_std]
-#![no_main]
 #![feature(lang_items)]
 #![feature(alloc_error_handler)]
 #![feature(panic_info_message)]
+#![no_std]
+#![cfg_attr(not(test), no_main)]
+#[cfg(test)]
+extern crate alloc;
+
+#[cfg(not(test))]
+use ckb_std::default_alloc;
+#[cfg(not(test))]
+ckb_std::entry!(program_entry);
+#[cfg(not(test))]
+default_alloc!();
 
 // define modules
 mod entry;
 mod error;
-
-use ckb_std::default_alloc;
-
-ckb_std::entry!(program_entry);
-default_alloc!();
 
 /// program entry
 fn program_entry() -> i8 {
