@@ -13,7 +13,7 @@ pub mod const_value {
     pub const PUBKEY_2: &str = "00x0216bc7b5b0a30fb910c372062a7f8cfa89f3a231f5d4a975e60a787ea828aa49e";
     pub const LOCKARG_2: &str = "0x4118c8c16749bf126b22468d030bf9de7da3717b";
 
-    pub const CODE_HASH: &str = "ab50662923529a818e3bcbca1098a12de421e19f4840a45dd046fd33bffbfb91";
-    pub const TX_HASH: &str = "da1e894ed3922156d66052b7ecd5ba9f6363400d0265e95b1e103720839631a6";
+    pub const CODE_HASH: &str = "853ef3e1bb589f42878c6b542286e480ca4c01fd75c56e01ba5efc9874483972";
+    pub const TX_HASH: &str = "9076cf93200c0a58d83a3dc448a691ff1168caf609d26eb5932c2a7fc3dc212c";
 
 }
