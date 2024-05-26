@@ -17,8 +17,8 @@ use ckb_sdk::{
     Address, HumanCapacity, ScriptId, SECP256K1,
 };
 
-use ckb_types::{bytes::Bytes, core::{BlockView, ScriptHashType, TransactionView}, packed::{CellOutput, Script, WitnessArgs}, prelude::*, H256, h256};
-use ckb_types::packed::{Byte32, Byte32Builder, CellDepBuilder, OutPoint, ScriptOpt};
+use ckb_types::{bytes::Bytes, core::{BlockView, ScriptHashType, TransactionView}, packed::{CellOutput, Script, WitnessArgs}, prelude::*, H256};
+use ckb_types::packed::{Byte32,CellDepBuilder, OutPoint, ScriptOpt};
 use clap::Parser;
 use const_value::const_value::CODE_HASH;
 use crate::const_value::const_value::TX_HASH;
@@ -111,20 +111,19 @@ fn build_transfer_tx(
     let code = CODE_HASH.parse::<H256>().unwrap().0;
     let code_hash = Byte32::from_slice(&code).unwrap();
 
-    let out_point = OutPoint::new(tx_hash, 0);
+    let type_out_point = OutPoint::new(tx_hash, 0);
     let ckb_client = CkbRpcClient::new(args.ckb_rpc.as_str());
 
-    // let cmd = code_hash.unpack();
-    let script_id = ScriptId::new(code_hash.unpack(), ScriptHashType::Data2.into());
+    let type_script_id = ScriptId::new(code_hash.unpack(), ScriptHashType::Data2.into());
 
-    let cell_dep = CellDepBuilder::default().out_point(out_point).build();
-    // let cell_dep_resolver = CellDepBuilder::out_point(cell_dep_resolver, out_point);
+    let type_cell_dep = CellDepBuilder::default().out_point(type_out_point).build();
+
     let mut cell_dep_resolver = {
         let genesis_block = ckb_client.get_block_by_number(0.into())?.unwrap();
         DefaultCellDepResolver::from_genesis(&BlockView::from(genesis_block))?
     };
 
-    cell_dep_resolver.insert(script_id, cell_dep, String::from("vjp"));
+    cell_dep_resolver.insert(type_script_id, type_cell_dep, String::from("data_check"));
     let header_dep_resolver = DefaultHeaderDepResolver::new(args.ckb_rpc.as_str());
     let mut cell_collector = DefaultCellCollector::new(args.ckb_rpc.as_str());
     let tx_dep_provider = DefaultTransactionDependencyProvider::new(args.ckb_rpc.as_str(), 10);
@@ -132,7 +131,7 @@ fn build_transfer_tx(
     let type_script = Script::new_builder()
         .code_hash(code_hash)
         .hash_type(ScriptHashType::Data2.into())
-        .args(Bytes::from(vec![0, 1, 1]).pack())
+        // .args(Bytes::from("apple").pack())
         .build();
 
     let type_script_opt = ScriptOpt::new_builder()
@@ -140,13 +139,27 @@ fn build_transfer_tx(
     //
     // println!("{:?}", type_script_opt);
 
+    let auto_success_script = Script::default();
+
     // Build the transaction
-    let output = CellOutput::new_builder()
-        .lock(Script::from(&args.receiver))
+    let output_cells = vec![
+
+        CellOutput::new_builder()
+        .lock(auto_success_script.clone())
+        .type_(type_script_opt.clone())
+        .capacity(args.capacity.0.pack())
+        .build(),
+        CellOutput::new_builder()
+        .lock(auto_success_script)
         .type_(type_script_opt)
         .capacity(args.capacity.0.pack())
-        .build();
-    let builder = CapacityTransferBuilder::new(vec![(output, Bytes::default())]);
+        .build(),
+    ];
+    let outputs_data = vec![Bytes::from("apple"), Bytes::from("tomato")];
+    let outputs = output_cells.into_iter().zip(outputs_data.into_iter()).collect();
+
+
+    let builder = CapacityTransferBuilder::new(outputs);
     let (tx, still_locked_groups) = builder.build_unlocked(
         &mut cell_collector,
         &cell_dep_resolver,

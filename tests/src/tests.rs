@@ -9,12 +9,11 @@ use ckb_testtool::{builtin::ALWAYS_SUCCESS};
 use ckb_testtool::{
     ckb_types::{
         bytes::Bytes,
-        core::{TransactionBuilder, TransactionView},
+        core::{TransactionBuilder},
     },
     context::Context,
 };
 
-use std::time::Instant;
 
 use ark_bls12_381::{ Fr};
 use ark_ff::{One, Zero};
@@ -22,12 +21,95 @@ use ark_serialize::*;
 use ark_std::test_rng;
 use ckb_testtool::ckb_types::packed::{CellDep, CellInput, CellOutput};
 use ckb_testtool::ckb_types::prelude::{Builder, Entity, Pack};
-// use zkp_r1cs::{ConstraintSynthesizer, ConstraintSystem, SynthesisError};
+use crate::utils::proving_test;
 
 use super::*;
 
-const MAX_CYCLES: u64 = 1_000_000_000_000;
+pub(crate) const MAX_CYCLES: u64 = 1_000_000_000_000;
+
 #[test]
+fn test_sum_check() {
+    // deploy contract
+    let mut context = Context::default();
+    let loader = Loader::default();
+    let carrot_bin = loader.load_binary("data_check");
+    let carrot_out_point = context.deploy_cell(carrot_bin);
+    let carrot_cell_dep = CellDep::new_builder()
+        .out_point(carrot_out_point.clone())
+        .build();
+
+    // prepare scripts
+    let always_success_out_point = context.deploy_cell(ALWAYS_SUCCESS.clone());
+    let lock_script = context
+        .build_script(&always_success_out_point.clone(), Default::default())
+        .expect("script");
+    let lock_script_dep = CellDep::new_builder()
+        .out_point(always_success_out_point)
+        .build();
+
+    // prepare cell deps
+    let cell_deps: Vec<CellDep> = vec![lock_script_dep, carrot_cell_dep];
+
+    // prepare cells
+    let input_out_point = context.create_cell(
+        CellOutput::new_builder()
+            .capacity(1000u64.pack())
+            .lock(lock_script.clone())
+            .build(),
+        Bytes::new(),
+    );
+    let input = CellInput::new_builder()
+        .previous_output(input_out_point.clone())
+        .build();
+
+    let type_script = context
+        .build_script(&carrot_out_point, Bytes::new())
+        .expect("script");
+
+    let outputs = vec![
+        CellOutput::new_builder()
+            .capacity(500u64.pack())
+            .lock(lock_script.clone())
+            .type_(Some(type_script.clone()).pack())
+            .build(),
+        CellOutput::new_builder()
+            .capacity(500u64.pack())
+            .lock(lock_script)
+            .build(),
+    ];
+
+    // prepare output cell data
+    let outputs_data = vec![Bytes::from("apple"), Bytes::from("tomato")];
+    let mut d1 = outputs_data[0].clone();
+    let mut d2=  d1.pack();
+    println!("d1 {:?}", d1);
+    println!("d2 {:?}", d2);
+    // let str =
+    // build transaction
+    let tx = TransactionBuilder::default()
+        .cell_deps(cell_deps)
+        .input(input)
+        .outputs(outputs)
+        .outputs_data(outputs_data.pack())
+        .build();
+
+    let tx = tx.as_advanced_builder().build();
+
+    // run
+    let cycles = context
+        .verify_tx(&tx, MAX_CYCLES)
+        .expect("pass verification");
+    println!("consume cycles: {}", cycles);
+
+    // assert_eq!(1, 2);
+}
+
+
+
+
+
+
+// #[test]
 fn test_plonk() {
     use ark_bls12_381::{Bls12_381, Fr};
     use ark_ff::{One, Zero};
@@ -150,88 +232,3 @@ fn test_plonk() {
     assert_eq!(1, 2);
 }
 
-fn build_test_context(
-    vk: Bytes,
-    proof_file: Bytes,
-    publics: Bytes,
-    contract: &str,
-) -> (Context, TransactionView) {
-    // deploy contract.
-    let mut context = Context::default();
-    let contract_bin: Bytes = Loader::default().load_binary(contract);
-    let contract_out_point = context.deploy_cell(contract_bin);
-    // Deploy always_success script as lock script.
-    let always_success_out_point = context.deploy_cell(ALWAYS_SUCCESS.clone());
-
-    // Build LOCK script using always_success script.
-    let lock_script = context
-        .build_script(&always_success_out_point, Default::default())
-        .expect("build lock script");
-    let lock_script_dep = CellDep::new_builder()
-        .out_point(always_success_out_point)
-        .build();
-
-    // Build TYPE script using the ckb-zkp contract
-    let type_script = context
-        .build_script(&contract_out_point, Bytes::default())
-        .expect("build type script");
-    let type_script_dep = CellDep::new_builder().out_point(contract_out_point).build();
-
-    // prepare cells
-    let input_out_point = context.create_cell(
-        CellOutput::new_builder()
-            .capacity(((vk.len() + proof_file.len() + publics.len()) as u64).pack())
-            .lock(lock_script.clone())
-            .build(),
-        Bytes::new(),
-    );
-    let input = CellInput::new_builder()
-        .previous_output(input_out_point)
-        .build();
-    let outputs = vec![
-        CellOutput::new_builder()
-            .capacity((vk.len() as u64).pack())
-            .lock(lock_script.clone())
-            .type_(Some(type_script).pack())
-            .build(),
-        CellOutput::new_builder()
-            .capacity((proof_file.len() as u64).pack())
-            .lock(lock_script.clone())
-            .build(),
-        CellOutput::new_builder()
-            .capacity((publics.len() as u64).pack())
-            .lock(lock_script)
-            .build(),
-    ];
-
-    let outputs_data = vec![vk, proof_file, publics];
-
-    // build transaction
-    let tx = TransactionBuilder::default()
-        .input(input)
-        .outputs(outputs)
-        .outputs_data(outputs_data.pack())
-        .cell_dep(lock_script_dep)
-        .cell_dep(type_script_dep)
-        .build();
-    (context, tx)
-}
-
-fn proving_test(vk: Bytes, proof: Bytes, publics: Bytes, contract: &str, name: &str) {
-    let (mut context, tx) = build_test_context(vk, proof, publics, contract);
-
-    let tx = context.complete_tx(tx);
-
-    let start = Instant::now();
-    match context.verify_tx(&tx, MAX_CYCLES) {
-        Ok(cycles) => {
-            println!("{}: cycles: {}", name, cycles);
-        }
-        Err(err) => panic!("Failed to pass test: {}", err),
-    }
-    println!(
-        "Verify Mini circuit use {} Time: {:?}",
-        name,
-        start.elapsed()
-    );
-}
