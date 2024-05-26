@@ -7,6 +7,8 @@ members = [
   # @@INSERTION_POINT@@
   "contracts/plonk_verifier",
   "tests",
+  "client",
+  "plonk",
 ]
 
 [profile.release]
