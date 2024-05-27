@@ -28,7 +28,7 @@ use super::*;
 pub(crate) const MAX_CYCLES: u64 = 1_000_000_000_000;
 
 #[test]
-fn test_sum_check() {
+fn test_data_check() {
     // deploy contract
     let mut context = Context::default();
     let loader = Loader::default();
@@ -109,7 +109,7 @@ fn test_sum_check() {
 
 
 
-// #[test]
+#[test]
 fn test_plonk() {
     use ark_bls12_381::{Bls12_381, Fr};
     use ark_ff::{One, Zero};
@@ -190,11 +190,6 @@ fn test_plonk() {
     // println!("before serialize: {:?}", vk);
     vk.serialize_unchecked(&mut vk_bytes).unwrap();
 
-    // println!("Plonk: VerifyKey length: {}", vk_bytes.len());
-
-    // let new_vk = plonk_ckb::VerifierKey::<Fr, PC>::deserialize_unchecked(&vk_bytes[..]).unwrap();
-    //assert_eq!(vk, new_vk);
-    // println!("after serialize: {:?}", new_vk);
     println!("Plonk: proving...");
     let proof = PlonkInst::prove(&pk, &cs, rng).unwrap();
     let mut proof_bytes = Vec::new();
