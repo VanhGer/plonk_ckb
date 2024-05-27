@@ -22,6 +22,8 @@ default_alloc!();
 // define modules
 mod entry;
 mod error;
+mod data_structure;
+mod verify;
 
 /// program entry
 fn program_entry() -> i8 {
