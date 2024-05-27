@@ -5,6 +5,7 @@ use ark_bls12_381::Fr;
 use ark_ec::{AffineRepr, CurveGroup};
 use ark_ff::{One, UniformRand};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use crate::srs_const::SRS;
 
 use crate::types::{G1Point, G2Point};
 
@@ -38,8 +39,8 @@ impl Srs {
     }
 
     pub fn load_srs() -> Self {
-        let new_s = fs::read("output.bin").expect("read failed");
-        let srs = Srs::deserialize_uncompressed(&new_s[..]).unwrap();
+        let new_s = Vec::<u8>::from(SRS);
+        let srs = Srs::deserialize_uncompressed_unchecked(&new_s[..]).unwrap();
         srs
     }
 
