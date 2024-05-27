@@ -1,12 +1,14 @@
-
-use ark_bls12_381::{Bls12_381, Fr};
-use ark_serialize::CanonicalSerialize;
-use ckb_types::bytes::Bytes;
+use ark_bls12_381::Fr;
 use sha2::Sha256;
+
 use plonk::circuit::Circuit;
 use plonk::prover;
+use plonk::verifier;
 
-pub fn generate_plonk() -> (Bytes, Bytes){
+fn main() {
+    // Function: xy + 3x^2 + xyz = 11
+
+    // init a new circuit
     let compile_circuit = Circuit::default()
         .add_multiplication_gate(
             (0, 1, Fr::from(1)),
@@ -56,12 +58,6 @@ pub fn generate_plonk() -> (Bytes, Bytes){
     // generate proof
     let proof = prover::generate_proof::<Sha256>(&compile_circuit);
 
-    let mut public_bytes = Vec::new();
-    let mut proof_bytes = Vec::new();
-
-    compile_circuit.serialize_uncompressed(&mut public_bytes).unwrap();
-    proof.serialize_uncompressed(&mut proof_bytes).unwrap();
-
-    (public_bytes.into(), proof_bytes.into())
-
+    // verify proof
+    assert!(verifier::verify::<Sha256>(&compile_circuit, proof).is_ok());
 }

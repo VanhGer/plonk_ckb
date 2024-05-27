@@ -124,7 +124,7 @@ fn build_plonk_verifier_tx(
         DefaultCellDepResolver::from_genesis(&BlockView::from(genesis_block))?
     };
 
-    cell_dep_resolver.insert(type_script_id, type_cell_dep, String::from("data_check"));
+    cell_dep_resolver.insert(type_script_id, type_cell_dep, String::from("plonk_check"));
     let header_dep_resolver = DefaultHeaderDepResolver::new(args.ckb_rpc.as_str());
     let mut cell_collector = DefaultCellCollector::new(args.ckb_rpc.as_str());
     let tx_dep_provider = DefaultTransactionDependencyProvider::new(args.ckb_rpc.as_str(), 0);
@@ -137,10 +137,9 @@ fn build_plonk_verifier_tx(
     let auto_success_script = Script::default();
 
     // Build the transaction
-    let (vk_bytes, proof_bytes, public_bytes) = generate_plonk();
-    // println!("vklen: {:?}", vk_bytes.len());
-    // println!("prooflen: {:?}", proof_bytes.len());
-    // println!("publiclen: {:?}", public_bytes.len());
+    let (public_bytes, proof_bytes) = generate_plonk();
+    println!("publiclen: {:?}", public_bytes.len());
+    println!("prooflen: {:?}", proof_bytes.len());
 
     // compute capa = type_script.size + lock_script.size
     let init_capa = type_script.occupied_capacity().unwrap().as_u64() + auto_success_script.occupied_capacity().unwrap().as_u64();
@@ -149,11 +148,11 @@ fn build_plonk_verifier_tx(
     // println!("le: {:?}", le);
 
     /// compute capa = type_script.size + lock_script.size + data.size
-    let cell1_capa = init_capa + (vk_bytes.len() as u64) * TO_SHANNON;
+    let cell1_capa = init_capa + (public_bytes.len() as u64) * TO_SHANNON;
     let cell2_capa = init_capa + (proof_bytes.len() as u64) * TO_SHANNON;
-    let cell3_capa = init_capa + (public_bytes.len() as u64) * TO_SHANNON;
 
     /// capa = type_script.size + lock_script.size + data.size + capa.size
+    /// send public and proof
     let output_cells = vec![
         CellOutput::new_builder()
             .capacity((cell1_capa + (cell1_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
@@ -164,19 +163,11 @@ fn build_plonk_verifier_tx(
         CellOutput::new_builder()
             .capacity((cell2_capa + (cell2_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
             .lock(auto_success_script.clone())
-            .type_(Some(type_script.clone()).pack())
+            // .type_(Some(type_script.clone()).pack())
             .build(),
-
-        CellOutput::new_builder()
-            .capacity((cell3_capa + (cell3_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
-            .lock(auto_success_script.clone())
-            .type_(Some(type_script.clone()).pack())
-            .build(),
-
-
     ];
 
-    let outputs_data = vec![vk_bytes, proof_bytes, public_bytes];
+    let outputs_data = vec![public_bytes, proof_bytes];
     let outputs: Vec<_>= output_cells.into_iter().zip(outputs_data.into_iter()).collect();
 
     let builder = CapacityTransferBuilder::new(outputs);
