@@ -11,7 +11,7 @@ pub struct CompiledCircuit {
 
     gate_constraint: GateConstraints,
     copy_constraint: CopyConstraints,
-    srs: Srs,
+    // srs: Srs,
 }
 
 impl CompiledCircuit {
@@ -26,13 +26,13 @@ impl CompiledCircuit {
     pub fn new(
         gate_constraint: GateConstraints,
         copy_constraint: CopyConstraints,
-        srs: Srs,
+        // srs: Srs,
         size: usize,
     ) -> Self {
         Self {
             gate_constraint,
             copy_constraint,
-            srs,
+            // srs,
             size,
         }
     }
@@ -47,8 +47,8 @@ impl CompiledCircuit {
         &self.copy_constraint
     }
 
-    /// Returns a clone of the structured reference string (SRS) associated with the compiled circuit.
-    pub fn srs(&self) -> Srs {
-        self.srs.clone()
-    }
+    // Returns a clone of the structured reference string (SRS) associated with the compiled circuit.
+    // pub fn srs(&self) -> Srs {
+    //     self.srs.clone()
+    // }
 }

@@ -222,7 +222,7 @@ impl Circuit {
 
         let circuit_size = self.gates.len();
         let domain = <GeneralEvaluationDomain<Fr>>::new(circuit_size).unwrap();
-        let srs = Srs::new(circuit_size);
+        // let srs = Srs::new(circuit_size);
         let assignment = self.get_assignment();
 
         let mut interpolated_assignment = assignment
@@ -298,7 +298,7 @@ impl Circuit {
         Ok(CompiledCircuit::new(
             gate_constraints,
             copy_constraints,
-            srs,
+            // srs,
             circuit_size,
         ))
     }

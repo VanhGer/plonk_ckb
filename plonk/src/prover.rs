@@ -12,6 +12,7 @@ use sha2::Sha256;
 
 use kzg::commitment::KzgCommitment;
 use kzg::scheme::KzgScheme;
+use kzg::srs::Srs;
 
 use crate::challenge::ChallengeGenerator;
 use crate::compiled_circuit::CompiledCircuit;
@@ -66,7 +67,8 @@ pub fn generate_proof<T: Digest + Default>(compiled_circuit: &CompiledCircuit) -
     println!("ROUND 1");
 
     let mut rng = rand::thread_rng();
-    let scheme = KzgScheme::new(compiled_circuit.srs().clone());
+    let srs = Srs::load_srs();
+    let scheme = KzgScheme::new(srs);
     let domain = <GeneralEvaluationDomain<Fr>>::new(compiled_circuit.size).unwrap();
 
     let b1 = Fr::rand(&mut rng);

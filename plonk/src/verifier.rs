@@ -8,6 +8,7 @@ use digest::Digest;
 
 use kzg::commitment::KzgCommitment;
 use kzg::scheme::KzgScheme;
+use kzg::srs::Srs;
 
 use crate::challenge::ChallengeGenerator;
 use crate::compiled_circuit::CompiledCircuit;
@@ -23,20 +24,23 @@ pub fn verify<T: Digest + Default>(
 
     #[cfg(test)]
     println!("Precompute");
+
+    let srs = Srs::load_srs();
+    let scheme = KzgScheme::new(srs.clone());
+
     let (q_m_c, q_l_c, q_r_c, q_o_c, q_c_c, s_sigma_1_c, s_sigma_2_c, s_sigma_3_c) =
-        get_circuit_commitment(compiled_circuit);
+        get_circuit_commitment(compiled_circuit, &scheme);
 
     #[cfg(test)]
     println!("Verify challenges");
     let (alpha, beta, gamma, evaluation_challenge, v, u) =
-        verify_challenges::<T>(&proof, compiled_circuit);
+        verify_challenges::<T>(&proof, &scheme);
 
     if u != proof.u {
         return Err(String::from("Verify: Challenge verification failed."));
     }
 
     let domain = <GeneralEvaluationDomain<Fr>>::new(compiled_circuit.size).unwrap();
-    let scheme = KzgScheme::new(compiled_circuit.srs());
     let w = domain.element(1);
 
     let z_h_e = evaluation_challenge.pow(BigInt::new([domain.size() as u64])) - Fr::from(1);
@@ -124,7 +128,7 @@ pub fn verify<T: Digest + Default>(
 
     let pairing_left_side = Bls12_381::pairing(
         (proof.w_ev_x_commit.clone() + proof.w_ev_wx_commit.clone().mul(u)).0,
-        compiled_circuit.srs().g2s(),
+        srs.g2s(),
     );
 
     #[cfg(test)]
@@ -138,7 +142,7 @@ pub fn verify<T: Digest + Default>(
             + f
             - e)
             .0,
-        compiled_circuit.srs().g2(),
+        srs.g2(),
     );
 
     #[cfg(test)]
@@ -156,6 +160,7 @@ pub fn verify<T: Digest + Default>(
 /// Gets commitments of the circuit via compiled_circuit
 fn get_circuit_commitment(
     compiled_circuit: &CompiledCircuit,
+    scheme: &KzgScheme
 ) -> (
     KzgCommitment,
     KzgCommitment,
@@ -166,7 +171,7 @@ fn get_circuit_commitment(
     KzgCommitment,
     KzgCommitment,
 ) {
-    let scheme = KzgScheme::new(compiled_circuit.srs());
+
     let q_m_c = scheme.commit(compiled_circuit.gate_constraints().q_mx());
     let q_l_c = scheme.commit(compiled_circuit.gate_constraints().q_lx());
     let q_r_c = scheme.commit(compiled_circuit.gate_constraints().q_rx());
@@ -184,9 +189,9 @@ fn get_circuit_commitment(
 /// Verifies Fiat-Shamir challenges.
 fn verify_challenges<T: Digest + Default>(
     proof: &Proof,
-    compiled_circuit: &CompiledCircuit,
+    scheme: &KzgScheme
 ) -> (Fr, Fr, Fr, Fr, Fr, Fr) {
-    let scheme = KzgScheme::new(compiled_circuit.srs());
+
     let commitments = [
         proof.a_commit.clone(),
         proof.b_commit.clone(),

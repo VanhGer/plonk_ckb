@@ -33,6 +33,11 @@ impl Srs {
     ///
     /// A new `Srs` instance.
     pub fn new(circuit_size: usize) -> Self {
+        let s = Fr::rand(&mut rand::thread_rng());
+        Self::new_from_secret(s, circuit_size)
+    }
+
+    pub fn load_srs() -> Self {
         let new_s = fs::read("output.bin").expect("read failed");
         let srs = Srs::deserialize_uncompressed(&new_s[..]).unwrap();
         srs
