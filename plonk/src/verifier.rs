@@ -33,8 +33,7 @@ pub fn verify<T: Digest + Default>(
 
     #[cfg(test)]
     println!("Verify challenges");
-    let (alpha, beta, gamma, evaluation_challenge, v, u) =
-        verify_challenges::<T>(&proof, &scheme);
+    let (alpha, beta, gamma, evaluation_challenge, v, u) = verify_challenges::<T>(&proof, &scheme);
 
     if u != proof.u {
         return Err(String::from("Verify: Challenge verification failed."));
@@ -160,7 +159,7 @@ pub fn verify<T: Digest + Default>(
 /// Gets commitments of the circuit via compiled_circuit
 fn get_circuit_commitment(
     compiled_circuit: &CompiledCircuit,
-    scheme: &KzgScheme
+    scheme: &KzgScheme,
 ) -> (
     KzgCommitment,
     KzgCommitment,
@@ -171,7 +170,6 @@ fn get_circuit_commitment(
     KzgCommitment,
     KzgCommitment,
 ) {
-
     let q_m_c = scheme.commit(compiled_circuit.gate_constraints().q_mx());
     let q_l_c = scheme.commit(compiled_circuit.gate_constraints().q_lx());
     let q_r_c = scheme.commit(compiled_circuit.gate_constraints().q_rx());
@@ -189,9 +187,8 @@ fn get_circuit_commitment(
 /// Verifies Fiat-Shamir challenges.
 fn verify_challenges<T: Digest + Default>(
     proof: &Proof,
-    scheme: &KzgScheme
+    scheme: &KzgScheme,
 ) -> (Fr, Fr, Fr, Fr, Fr, Fr) {
-
     let commitments = [
         proof.a_commit.clone(),
         proof.b_commit.clone(),

@@ -1,4 +1,4 @@
-use ckb_testtool::{builtin::ALWAYS_SUCCESS};
+use ckb_testtool::builtin::ALWAYS_SUCCESS;
 // use ckb_tool::ckb_types::{
 //     bytes::Bytes,
 //     core::{TransactionBuilder, TransactionView},
@@ -7,21 +7,17 @@ use ckb_testtool::{builtin::ALWAYS_SUCCESS};
 // };
 
 use ckb_testtool::{
-    ckb_types::{
-        bytes::Bytes,
-        core::{TransactionBuilder},
-    },
+    ckb_types::{bytes::Bytes, core::TransactionBuilder},
     context::Context,
 };
 
-
-use ark_bls12_381::{ Fr};
+use crate::utils::proving_test;
+use ark_bls12_381::Fr;
 use ark_ff::{One, Zero};
 use ark_serialize::*;
 use ark_std::test_rng;
 use ckb_testtool::ckb_types::packed::{CellDep, CellInput, CellOutput};
 use ckb_testtool::ckb_types::prelude::{Builder, Entity, Pack};
-use crate::utils::proving_test;
 
 use super::*;
 
@@ -81,7 +77,7 @@ fn test_data_check() {
     // prepare output cell data
     let outputs_data = vec![Bytes::from("apple"), Bytes::from("tomato")];
     let mut d1 = outputs_data[0].clone();
-    let mut d2=  d1.pack();
+    let mut d2 = d1.pack();
     println!("d1 {:?}", d1);
     println!("d2 {:?}", d2);
     // let str =
@@ -103,11 +99,6 @@ fn test_data_check() {
 
     // assert_eq!(1, 2);
 }
-
-
-
-
-
 
 // #[test]
 // fn test_plonk() {
@@ -226,4 +217,3 @@ fn test_data_check() {
 //
 //     assert_eq!(1, 2);
 // }
-

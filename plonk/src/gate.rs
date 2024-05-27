@@ -2,7 +2,7 @@ use ark_bls12_381::Fr;
 use ark_ff::{One, Zero};
 
 /// Enum representing the position of a wire in a gate.
-#[derive(PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 pub enum Position {
     /// Dummy position indicating no wire connection.
     Dummy,
@@ -10,6 +10,7 @@ pub enum Position {
     Pos(usize, usize),
 }
 
+#[derive(Clone, PartialEq, Debug)]
 /// Struct representing a gate in the circuit.
 pub struct Gate {
     /// Position of the input wire A.

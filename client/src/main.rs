@@ -19,11 +19,19 @@ use ckb_sdk::{
     Address, HumanCapacity, ScriptId, SECP256K1,
 };
 
-use ckb_types::{bytes::Bytes, core::{BlockView, ScriptHashType, TransactionView}, packed::{CellOutput, Script, WitnessArgs}, prelude::*, H256};
-use ckb_types::packed::{Byte32, CellDepBuilder, OutPoint};
-use clap::Parser;
-use crate::const_value::const_value::{PLONK_VERIFIER_CODE_HASH, PLONK_VERIFIER_TX_HASH, TO_SHANNON};
+use crate::const_value::const_value::{
+    PLONK_VERIFIER_CODE_HASH, PLONK_VERIFIER_TX_HASH, TO_SHANNON,
+};
 use crate::plonk_generator::generate_plonk;
+use ckb_types::packed::{Byte32, CellDepBuilder, OutPoint};
+use ckb_types::{
+    bytes::Bytes,
+    core::{BlockView, ScriptHashType, TransactionView},
+    packed::{CellOutput, Script, WitnessArgs},
+    prelude::*,
+    H256,
+};
+use clap::Parser;
 
 /// Transfer some CKB from one sighash address to other address
 /// # Example:
@@ -37,11 +45,19 @@ use crate::plonk_generator::generate_plonk;
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// The sender private key (hex string)
-    #[clap(long, value_name = "KEY", default_value = "a5808e79c243d8e026a034273ad7a5ccdcb2f982392fd0230442b1734c98a4c2")]
+    #[clap(
+        long,
+        value_name = "KEY",
+        default_value = "a5808e79c243d8e026a034273ad7a5ccdcb2f982392fd0230442b1734c98a4c2"
+    )]
     sender_key: H256,
 
     /// The receiver address
-    #[clap(long, value_name = "ADDRESS", default_value = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2prryvze6fhufxkgjx35psh7w70k3hz7c3mtl4d")]
+    #[clap(
+        long,
+        value_name = "ADDRESS",
+        default_value = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2prryvze6fhufxkgjx35psh7w70k3hz7c3mtl4d"
+    )]
     receiver: Address,
 
     /// The capacity to transfer (unit: CKB, example: 102.43)
@@ -83,9 +99,7 @@ fn main() -> Result<(), Box<dyn StdErr>> {
     Ok(())
 }
 
-fn generate_plonk_proof() {
-
-}
+fn generate_plonk_proof() {}
 fn build_plonk_verifier_tx(
     args: &Args,
     sender: Script,
@@ -142,7 +156,8 @@ fn build_plonk_verifier_tx(
     println!("prooflen: {:?}", proof_bytes.len());
 
     // compute capa = type_script.size + lock_script.size
-    let init_capa = type_script.occupied_capacity().unwrap().as_u64() + auto_success_script.occupied_capacity().unwrap().as_u64();
+    let init_capa = type_script.occupied_capacity().unwrap().as_u64()
+        + auto_success_script.occupied_capacity().unwrap().as_u64();
 
     // let le = capa.to_be_bytes().len();
     // println!("le: {:?}", le);
@@ -159,7 +174,6 @@ fn build_plonk_verifier_tx(
             .lock(auto_success_script.clone())
             .type_(Some(type_script.clone()).pack())
             .build(),
-
         CellOutput::new_builder()
             .capacity((cell2_capa + (cell2_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
             .lock(auto_success_script.clone())
@@ -168,7 +182,10 @@ fn build_plonk_verifier_tx(
     ];
 
     let outputs_data = vec![public_bytes, proof_bytes];
-    let outputs: Vec<_>= output_cells.into_iter().zip(outputs_data.into_iter()).collect();
+    let outputs: Vec<_> = output_cells
+        .into_iter()
+        .zip(outputs_data.into_iter())
+        .collect();
 
     let builder = CapacityTransferBuilder::new(outputs);
     let (tx, still_locked_groups) = builder.build_unlocked(
@@ -183,7 +200,6 @@ fn build_plonk_verifier_tx(
 
     Ok(tx)
 }
-
 
 // fn build_data_check_tx(
 //     args: &Args,

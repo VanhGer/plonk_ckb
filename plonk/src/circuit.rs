@@ -5,13 +5,12 @@ use ark_bls12_381::Fr;
 use ark_ff::One;
 use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial};
 
-use kzg::srs::Srs;
-
 use crate::compiled_circuit::CompiledCircuit;
 use crate::constraint::{CopyConstraints, GateConstraints};
 use crate::gate::{Gate, Position};
 
 // Represents a circuit consisting of gates and values.
+#[derive(PartialEq, Debug)]
 pub struct Circuit {
     gates: Vec<Gate>,
     vals: Vec<Arc<Vec<Fr>>>,
@@ -301,6 +300,10 @@ impl Circuit {
             // srs,
             circuit_size,
         ))
+    }
+
+    pub fn getGates(&self) -> Vec<Gate> {
+        return self.gates.clone();
     }
 }
 

@@ -1,5 +1,4 @@
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
-use kzg::srs::Srs;
 
 use crate::constraint::{CopyConstraints, GateConstraints};
 

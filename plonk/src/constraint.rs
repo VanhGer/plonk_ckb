@@ -1,6 +1,7 @@
-use crate::types::Polynomial;
 use ark_bls12_381::Fr;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+
+use crate::types::Polynomial;
 
 /// Represents gate constraints for a compiled circuit.
 #[derive(Debug, CanonicalDeserialize, CanonicalSerialize)]
