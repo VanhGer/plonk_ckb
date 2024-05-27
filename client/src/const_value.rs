@@ -13,7 +13,10 @@ pub mod const_value {
     pub const PUBKEY_2: &str = "00x0216bc7b5b0a30fb910c372062a7f8cfa89f3a231f5d4a975e60a787ea828aa49e";
     pub const LOCKARG_2: &str = "0x4118c8c16749bf126b22468d030bf9de7da3717b";
 
-    pub const CODE_HASH: &str = "853ef3e1bb589f42878c6b542286e480ca4c01fd75c56e01ba5efc9874483972";
-    pub const TX_HASH: &str = "9076cf93200c0a58d83a3dc448a691ff1168caf609d26eb5932c2a7fc3dc212c";
+    pub const DATA_CHECK_CODE_HASH: &str = "853ef3e1bb589f42878c6b542286e480ca4c01fd75c56e01ba5efc9874483972";
+    pub const DATA_CHECK_TX_HASH: &str = "9076cf93200c0a58d83a3dc448a691ff1168caf609d26eb5932c2a7fc3dc212c";
+    pub const PLONK_VERIFIER_CODE_HASH: &str = "0523302460916cf04fa6e083f071ad368c042c515f1defa4c481e6c2cc62df6a";
+    pub const PLONK_VERIFIER_TX_HASH: &str = "455b2b2e583043f7347dee2054e9dbb105b507070d921b1df6029534f7c8499b";
 
+    pub const TO_SHANNON: u64 = 100000000;
 }
