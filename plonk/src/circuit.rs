@@ -276,6 +276,7 @@ impl Circuit {
                 .get(Self::VEC_PI)
                 .unwrap()
                 .evaluate(w);
+        println!("tmp: {:?}", tmp);
         if tmp != Fr::from(0) {
             return Err("wrong in compute gate constraints".to_string());
         }

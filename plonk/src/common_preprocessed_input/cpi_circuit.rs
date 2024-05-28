@@ -11,11 +11,11 @@ use crate::gate::{Gate, Position};
 
 // Represents a circuit consisting of gates and values.
 #[derive(PartialEq, Debug)]
-pub struct Circuit {
+pub struct CPICircuit {
     gates: Vec<Gate>,
 }
 
-impl Default for Circuit {
+impl Default for CPICircuit {
     fn default() -> Self {
         Self {
             gates: Vec::default(),
@@ -23,7 +23,7 @@ impl Default for Circuit {
     }
 }
 
-impl Circuit {
+impl CPICircuit {
     pub const VEC_A: &'static str = "vec_a";
     pub const VEC_B: &'static str = "vec_b";
     pub const VEC_C: &'static str = "vec_c";
@@ -35,7 +35,7 @@ impl Circuit {
     pub const VEC_PI: &'static str = "vec_pi";
 }
 
-impl Circuit {
+impl CPICircuit {
     /// Adds an addition gate to the circuit.
     pub fn add_addition_gate(
         mut self,
@@ -215,32 +215,38 @@ impl Circuit {
 }
 
 #[cfg(test)]
-#[test]
-fn create_circuit_test() {
-    let circuit = Circuit::default()
-        .add_multiplication_gate(
-            (0, 0),
-            (0, 0),
-            (2, 0),
-            Fr::from(0),
-        )
-        .add_multiplication_gate(
-            (0, 0),
-            (1, 1),
-            (2, 1),
-            Fr::from(0),
-        )
-        .add_addition_gate(
-            (2, 1),
-            (1, 2),
-            (2, 2),
-            Fr::from(0),
-        )
-        .add_addition_gate(
-            (2, 0),
-            (2, 2),
-            (2, 3),
-            Fr::from(0),
-        );
-    circuit.compile().unwrap();
+mod tests {
+    use ark_bls12_381::Fr;
+
+    use crate::common_preprocessed_input::cpi_circuit::CPICircuit;
+
+    #[test]
+    fn create_circuit_test() {
+        let parserCircuit = CPICircuit::default()
+            .add_multiplication_gate(
+                (0, 0),
+                (0, 0),
+                (2, 0),
+                Fr::from(0),
+            )
+            .add_multiplication_gate(
+                (0, 0),
+                (1, 1),
+                (2, 1),
+                Fr::from(0),
+            )
+            .add_addition_gate(
+                (2, 1),
+                (1, 2),
+                (2, 2),
+                Fr::from(0),
+            )
+            .add_addition_gate(
+                (2, 0),
+                (2, 2),
+                (2, 3),
+                Fr::from(0),
+            );
+        parserCircuit.compile().unwrap();
+    }
 }

@@ -1,2 +1,2 @@
-pub mod parser;
-pub mod circuit;
+pub mod cpi_parser;
+pub mod cpi_circuit;
