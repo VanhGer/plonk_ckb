@@ -388,17 +388,17 @@ mod tests {
         assert!(verifier::verify::<Sha256>(&compiled_circuit, proof).is_ok());
     }
 
+    #[should_panic]
     #[test]
     fn parser_false_witness_test() {
         let mut parser = Parser::default();
         parser.add_witness("x", Fr::from(1));
         parser.add_witness("y", Fr::from(2));
         parser.add_witness("z", Fr::from(3));
-        // assert!(parser.parse("x+y+z=0").compile().is_err());
-        let cur = parser.parse("x + y + z = 0").compile();
-        println!("{:?}", cur);
-    }
+        let compiled_circuit = parser.parse("x+y+z=0").compile().unwrap();
 
+        let proof = prover::generate_proof::<Sha256>(&compiled_circuit);
+    }
 
     /// Test generated circuit with expected circuit
     #[test]

@@ -229,58 +229,6 @@ impl Circuit {
             .map(|(k, v)| (k, Evaluations::from_vec_and_domain(v, domain).interpolate()))
             .collect::<HashMap<_, _>>();
 
-        // check the computation of gate constraints
-        let roots = domain.elements().collect::<Vec<_>>();
-        let w = roots.first().unwrap();
-        let tmp = interpolated_assignment
-            .get(Self::VEC_A)
-            .unwrap()
-            .evaluate(w)
-            * interpolated_assignment
-                .get(Self::VEC_B)
-                .unwrap()
-                .evaluate(w)
-            * interpolated_assignment
-                .get(Self::VEC_QM)
-                .unwrap()
-                .evaluate(w)
-            + interpolated_assignment
-                .get(Self::VEC_A)
-                .unwrap()
-                .evaluate(w)
-                * interpolated_assignment
-                    .get(Self::VEC_QL)
-                    .unwrap()
-                    .evaluate(w)
-            + interpolated_assignment
-                .get(Self::VEC_B)
-                .unwrap()
-                .evaluate(w)
-                * interpolated_assignment
-                    .get(Self::VEC_QR)
-                    .unwrap()
-                    .evaluate(w)
-            + interpolated_assignment
-                .get(Self::VEC_QO)
-                .unwrap()
-                .evaluate(w)
-                * interpolated_assignment
-                    .get(Self::VEC_C)
-                    .unwrap()
-                    .evaluate(w)
-            + interpolated_assignment
-                .get(Self::VEC_QC)
-                .unwrap()
-                .evaluate(w)
-            + interpolated_assignment
-                .get(Self::VEC_PI)
-                .unwrap()
-                .evaluate(w);
-        println!("tmp: {:?}", tmp);
-        if tmp != Fr::from(0) {
-            return Err("wrong in compute gate constraints".to_string());
-        }
-
         let gate_constraints = GateConstraints::new(
             interpolated_assignment.remove(Self::VEC_A).unwrap(),
             interpolated_assignment.remove(Self::VEC_B).unwrap(),
