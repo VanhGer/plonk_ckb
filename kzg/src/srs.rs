@@ -1,4 +1,3 @@
-use std::fs;
 use std::ops::Mul;
 
 use ark_bls12_381::Fr;

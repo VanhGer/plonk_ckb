@@ -370,9 +370,9 @@ mod tests {
     use ark_bls12_381::Fr;
     use sha2::Sha256;
 
+    use crate::{prover, verifier};
     use crate::circuit::Circuit;
     use crate::parser::Parser;
-    use crate::{prover, verifier};
 
     /// Test generated circuit with prover
     #[test]
