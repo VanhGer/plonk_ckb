@@ -218,14 +218,14 @@ pub fn generate_proof<T: Digest + Default>(compiled_circuit: &CompiledCircuit) -
         + poly_sub_para(&bx, &bar_b).mul(v.square())
         + poly_sub_para(&cx, &bar_c).mul(v * v * v)
         + poly_sub_para(
-            compiled_circuit.copy_constraints().get_s_sigma_1(),
-            &bar_s_sigma_1,
-        )
+        compiled_circuit.copy_constraints().get_s_sigma_1(),
+        &bar_s_sigma_1,
+    )
         .mul(v * v * v * v)
         + poly_sub_para(
-            compiled_circuit.copy_constraints().get_s_sigma_2(),
-            &bar_s_sigma_2,
-        )
+        compiled_circuit.copy_constraints().get_s_sigma_2(),
+        &bar_s_sigma_2,
+    )
         .mul(v * v * v * v * v);
 
     // check w_ev_x
@@ -323,48 +323,48 @@ fn compute_acc(
             + *beta * w_i_sub1
             + *gamma)
             * (compiled_circuit
-                .gate_constraints()
-                .f_bx()
-                .evaluate(w_i_sub1)
-                + *beta * k1 * w_i_sub1
-                + *gamma)
+            .gate_constraints()
+            .f_bx()
+            .evaluate(w_i_sub1)
+            + *beta * k1 * w_i_sub1
+            + *gamma)
             * (compiled_circuit
-                .gate_constraints()
-                .f_cx()
-                .evaluate(w_i_sub1)
-                + *beta * k2 * w_i_sub1
-                + *gamma);
+            .gate_constraints()
+            .f_cx()
+            .evaluate(w_i_sub1)
+            + *beta * k2 * w_i_sub1
+            + *gamma);
 
         let denominator = (compiled_circuit
             .gate_constraints()
             .f_ax()
             .evaluate(w_i_sub1)
             + *beta
-                * compiled_circuit
-                    .copy_constraints()
-                    .get_s_sigma_1()
-                    .evaluate(w_i_sub1)
+            * compiled_circuit
+            .copy_constraints()
+            .get_s_sigma_1()
+            .evaluate(w_i_sub1)
             + *gamma)
             * (compiled_circuit
-                .gate_constraints()
-                .f_bx()
-                .evaluate(w_i_sub1)
-                + *beta
-                    * compiled_circuit
-                        .copy_constraints()
-                        .get_s_sigma_2()
-                        .evaluate(w_i_sub1)
-                + *gamma)
+            .gate_constraints()
+            .f_bx()
+            .evaluate(w_i_sub1)
+            + *beta
+            * compiled_circuit
+            .copy_constraints()
+            .get_s_sigma_2()
+            .evaluate(w_i_sub1)
+            + *gamma)
             * (compiled_circuit
-                .gate_constraints()
-                .f_cx()
-                .evaluate(w_i_sub1)
-                + *beta
-                    * compiled_circuit
-                        .copy_constraints()
-                        .get_s_sigma_3()
-                        .evaluate(w_i_sub1)
-                + *gamma);
+            .gate_constraints()
+            .f_cx()
+            .evaluate(w_i_sub1)
+            + *beta
+            * compiled_circuit
+            .copy_constraints()
+            .get_s_sigma_3()
+            .evaluate(w_i_sub1)
+            + *gamma);
 
         pre_acc_e = pre_acc_e * numerator / denominator;
         acc_e.push(pre_acc_e);
@@ -413,28 +413,28 @@ fn compute_quotient_polynomial(
 
     let line3 = (ax.clone()
         + compiled_circuit
-            .copy_constraints()
-            .get_s_sigma_1()
-            .mul(*beta)
+        .copy_constraints()
+        .get_s_sigma_1()
+        .mul(*beta)
         + DensePolynomial::from_coefficients_vec(vec![*gamma]))
-    .mul(
-        &(bx.clone()
-            + compiled_circuit
+        .mul(
+            &(bx.clone()
+                + compiled_circuit
                 .copy_constraints()
                 .get_s_sigma_2()
                 .mul(*beta)
-            + DensePolynomial::from_coefficients_vec(vec![*gamma])),
-    )
-    .mul(
-        &(cx.clone()
-            + compiled_circuit
+                + DensePolynomial::from_coefficients_vec(vec![*gamma])),
+        )
+        .mul(
+            &(cx.clone()
+                + compiled_circuit
                 .copy_constraints()
                 .get_s_sigma_3()
                 .mul(*beta)
-            + DensePolynomial::from_coefficients_vec(vec![*gamma])),
-    )
-    .mul(z_wx)
-    .mul(*alpha);
+                + DensePolynomial::from_coefficients_vec(vec![*gamma])),
+        )
+        .mul(z_wx)
+        .mul(*alpha);
 
     let line23 = &line2 - &line3;
 
@@ -531,44 +531,44 @@ fn compute_linearisation_polynomial(
             .mul(
                 &(bx.clone()
                     + DensePolynomial::from_coefficients_vec(vec![
-                        *gamma,
-                        *beta * compiled_circuit.copy_constraints().k1(),
-                    ])),
+                    *gamma,
+                    *beta * compiled_circuit.copy_constraints().k1(),
+                ])),
             )
             .mul(
                 &(cx.clone()
                     + DensePolynomial::from_coefficients_vec(vec![
-                        *gamma,
-                        *beta * compiled_circuit.copy_constraints().k2(),
-                    ])),
+                    *gamma,
+                    *beta * compiled_circuit.copy_constraints().k2(),
+                ])),
             )
             .mul(*alpha)
             .mul(z_x);
 
         let line32 = (ax.clone()
             + compiled_circuit
-                .copy_constraints()
-                .get_s_sigma_1()
-                .mul(*beta)
+            .copy_constraints()
+            .get_s_sigma_1()
+            .mul(*beta)
             + DensePolynomial::from_coefficients_vec(vec![*gamma]))
-        .mul(
-            &(bx.clone()
-                + compiled_circuit
+            .mul(
+                &(bx.clone()
+                    + compiled_circuit
                     .copy_constraints()
                     .get_s_sigma_2()
                     .mul(*beta)
-                + DensePolynomial::from_coefficients_vec(vec![*gamma])),
-        )
-        .mul(
-            &(cx.clone()
-                + compiled_circuit
+                    + DensePolynomial::from_coefficients_vec(vec![*gamma])),
+            )
+            .mul(
+                &(cx.clone()
+                    + compiled_circuit
                     .copy_constraints()
                     .get_s_sigma_3()
                     .mul(*beta)
-                + DensePolynomial::from_coefficients_vec(vec![*gamma])),
-        )
-        .mul(*alpha)
-        .mul(z_wx);
+                    + DensePolynomial::from_coefficients_vec(vec![*gamma])),
+            )
+            .mul(*alpha)
+            .mul(z_wx);
 
         let diff2 = line32.evaluate(eval_challenge) - line22.evaluate(eval_challenge);
         let cur = line3.evaluate(eval_challenge) - line2.evaluate(eval_challenge);

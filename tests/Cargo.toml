@@ -8,12 +8,12 @@ ckb-testtool = "0.12.0"
 serde_json = "1.0"
 #ckb-tool = "0.3.1"
 
+ark-ff = "0.4.2"
+ark-poly = "0.4.2"
+ark-ec = "0.4.2"
+ark-bls12-381 = "0.4.0"
+ark-serialize = "0.4.2"
+ark-std = "0.4.0"
+sha2 = "0.10"
+plonk = { version = "0.1.0", path = "../plonk" }
 rand = "0.8.5"
-blake2 = { version = "0.9", default-features = false }
-ark-ff = { version = "0.2", default-features = false }
-ark-serialize = { version = "0.2", default-features = false }
-ark-std = { version = "0.2", default-features = false }
-ark-bls12-381 = { version = "0.2", default-features = false, features = [ "curve" ] }
-ark-poly = {version = "0.2", default-features = false }
-ark-poly-commit = { version = "0.2", default-features = false }
-#bytes = "1.6.0"

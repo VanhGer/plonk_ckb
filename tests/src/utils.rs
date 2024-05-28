@@ -1,16 +1,18 @@
-use crate::Loader;
+use std::time::Instant;
+
 use ckb_testtool::builtin::ALWAYS_SUCCESS;
 use ckb_testtool::bytes::Bytes;
 use ckb_testtool::ckb_types::core::{TransactionBuilder, TransactionView};
 use ckb_testtool::ckb_types::packed::{CellDep, CellInput, CellOutput};
 use ckb_testtool::ckb_types::prelude::{Builder, Entity, Pack};
 use ckb_testtool::context::Context;
-use std::time::Instant;
+
+use crate::Loader;
+
 const MAX_CYCLES: u64 = 1_000_000_000_000;
+
 fn build_test_context(
-    vk: Bytes,
     proof_file: Bytes,
-    publics: Bytes,
     contract: &str,
 ) -> (Context, TransactionView) {
     // deploy contract.
@@ -37,7 +39,7 @@ fn build_test_context(
     // prepare cells
     let input_out_point = context.create_cell(
         CellOutput::new_builder()
-            .capacity(((vk.len() + proof_file.len() + publics.len()) as u64).pack())
+            .capacity(((proof_file.len()) as u64).pack())
             .lock(lock_script.clone())
             .build(),
         Bytes::new(),
@@ -47,21 +49,13 @@ fn build_test_context(
         .build();
     let outputs = vec![
         CellOutput::new_builder()
-            .capacity((vk.len() as u64).pack())
+            .capacity((proof_file.len() as u64).pack())
             .lock(lock_script.clone())
             .type_(Some(type_script).pack())
             .build(),
-        CellOutput::new_builder()
-            .capacity((proof_file.len() as u64).pack())
-            .lock(lock_script.clone())
-            .build(),
-        CellOutput::new_builder()
-            .capacity((publics.len() as u64).pack())
-            .lock(lock_script)
-            .build(),
     ];
 
-    let outputs_data = vec![vk, proof_file, publics];
+    let outputs_data = vec![proof_file];
 
     // build transaction
     let tx = TransactionBuilder::default()
@@ -74,8 +68,8 @@ fn build_test_context(
     (context, tx)
 }
 
-pub fn proving_test(vk: Bytes, proof: Bytes, publics: Bytes, contract: &str, name: &str) {
-    let (mut context, tx) = build_test_context(vk, proof, publics, contract);
+pub fn proving_test(proof: Bytes, contract: &str, name: &str) {
+    let (mut context, tx) = build_test_context(proof, contract);
 
     let tx = context.complete_tx(tx);
 

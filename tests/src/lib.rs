@@ -1,3 +1,8 @@
+use std::env;
+use std::fs;
+use std::path::PathBuf;
+use std::str::FromStr;
+
 use ckb_testtool::{
     ckb_error::Error,
     ckb_types::{
@@ -6,10 +11,6 @@ use ckb_testtool::{
     },
     context::Context,
 };
-use std::env;
-use std::fs;
-use std::path::PathBuf;
-use std::str::FromStr;
 
 #[cfg(test)]
 pub mod tests;

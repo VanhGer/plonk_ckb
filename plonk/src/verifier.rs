@@ -55,10 +55,10 @@ pub fn verify<T: Digest + Default>(
     let r_0 = p_i_e
         - l_1_e * alpha * alpha
         - alpha
-            * (proof.bar_a + proof.bar_s_sigma_1 * beta + gamma)
-            * (proof.bar_b + proof.bar_s_sigma_2 * beta + gamma)
-            * (proof.bar_c + gamma)
-            * proof.bar_z_w;
+        * (proof.bar_a + proof.bar_s_sigma_1 * beta + gamma)
+        * (proof.bar_b + proof.bar_s_sigma_2 * beta + gamma)
+        * (proof.bar_c + gamma)
+        * proof.bar_z_w;
 
     #[cfg(test)]
     println!("Compute [D]");
@@ -72,11 +72,11 @@ pub fn verify<T: Digest + Default>(
     let d_line2 = proof.z_commit.mul(
         (proof.bar_a + beta * evaluation_challenge + gamma)
             * (proof.bar_b
-                + beta * compiled_circuit.copy_constraints().k1() * evaluation_challenge
-                + gamma)
+            + beta * compiled_circuit.copy_constraints().k1() * evaluation_challenge
+            + gamma)
             * (proof.bar_c
-                + beta * compiled_circuit.copy_constraints().k2() * evaluation_challenge
-                + gamma)
+            + beta * compiled_circuit.copy_constraints().k2() * evaluation_challenge
+            + gamma)
             * alpha
             + l_1_e * alpha * alpha
             + u,
@@ -92,12 +92,12 @@ pub fn verify<T: Digest + Default>(
 
     let d_line4 = (proof.t_lo_commit
         + proof
-            .t_mid_commit
-            .mul(evaluation_challenge.pow(BigInt::new([proof.degree as u64 + 1])))
+        .t_mid_commit
+        .mul(evaluation_challenge.pow(BigInt::new([proof.degree as u64 + 1])))
         + proof
-            .t_hi_commit
-            .mul(evaluation_challenge.pow(BigInt::new([proof.degree as u64 * 2 + 2]))))
-    .mul(z_h_e);
+        .t_hi_commit
+        .mul(evaluation_challenge.pow(BigInt::new([proof.degree as u64 * 2 + 2]))))
+        .mul(z_h_e);
 
     let d = d_line1 + d_line2 - d_line3 - d_line4;
 
@@ -135,9 +135,9 @@ pub fn verify<T: Digest + Default>(
     let pairing_right_side = Bls12_381::pairing(
         (proof.w_ev_x_commit.clone().mul(evaluation_challenge)
             + proof
-                .w_ev_wx_commit
-                .clone()
-                .mul(u * evaluation_challenge * w)
+            .w_ev_wx_commit
+            .clone()
+            .mul(u * evaluation_challenge * w)
             + f
             - e)
             .0,

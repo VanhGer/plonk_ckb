@@ -2,7 +2,6 @@
 resolver = "2"
 
 members = [
-    "contracts/data_check",
     "contracts/plonk_verifier",
     "tests",
     "client",
@@ -14,3 +13,6 @@ members = [
 overflow-checks = true
 strip = true
 codegen-units = 1
+lto=true
+Zlocation-detail="none"
+opt-level="z"

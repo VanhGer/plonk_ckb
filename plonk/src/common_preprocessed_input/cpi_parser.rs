@@ -137,7 +137,6 @@ impl CommonPreprocessedInput {
 pub struct CPIParser {}
 
 impl CPIParser {
-
     /// Parse string into circuit
     ///
     /// ```
@@ -156,7 +155,7 @@ impl CPIParser {
 
         let mut bytes = Vec::new();
 
-        common_preprocessed_input.serialize_uncompressed(&mut bytes).unwrap();
+        common_preprocessed_input.serialize_compressed(&mut bytes).unwrap();
         let str = format!(
             "pub const COMMON_PROCESSED_INPUT:[u8;{}] = {:?};",
             bytes.len(),
@@ -408,7 +407,7 @@ mod tests {
         // Common preprocessed input parser
         CPIParser::default().parse(str);
         let vec = Vec::<u8>::from(COMMON_PROCESSED_INPUT);
-        let cpi = CommonPreprocessedInput::deserialize_uncompressed(&vec[..]).unwrap();
+        let cpi = CommonPreprocessedInput::deserialize_compressed(&vec[..]).unwrap();
 
         // Prover parser
         let mut parser = Parser::default();
@@ -432,4 +431,12 @@ mod tests {
         assert_eq!(cpi.s_sigma_3, copy_constraint.get_s_sigma_3().clone());
         assert_eq!(cpi.pi_x, gate_constraint.pi_x().clone());
     }
+
+    // #[test]
+    // fn vjp() {
+    //     let str = "x^3 + x + 5 = 35";
+    //
+    //     // Common preprocessed input parser
+    //     CPIParser::default().parse(str);
+    // }
 }

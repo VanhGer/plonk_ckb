@@ -2,8 +2,8 @@ use std::fmt::{Debug, Display};
 use std::ops::{Add, Mul, Neg, Sub};
 
 use ark_bls12_381::{Bls12_381, Fr};
-use ark_ec::pairing::Pairing;
 use ark_ec::{AffineRepr, CurveGroup};
+use ark_ec::pairing::Pairing;
 use ark_poly::{DenseUVPolynomial, Polynomial};
 
 use crate::commitment::KzgCommitment;
