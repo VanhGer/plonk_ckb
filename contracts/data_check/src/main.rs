@@ -25,16 +25,13 @@ pub fn program_entry() -> i8 {
 }
 
 fn check_data() -> Result<(), Error> {
-
     let check_first_data = "apple".as_bytes();
     let check_second_data = "tomato".as_bytes();
-
 
     let first_data = match load_cell_data(0, Source::Output) {
         Ok(data) => data,
         Err(err) => return Err(err.into()),
     };
-
 
     debug!("first_data is {:?}", first_data);
     debug!("check_first_data is {:?}", check_first_data);

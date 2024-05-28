@@ -1,11 +1,11 @@
-use std::time::Instant;
+use crate::Loader;
 use ckb_testtool::builtin::ALWAYS_SUCCESS;
 use ckb_testtool::bytes::Bytes;
 use ckb_testtool::ckb_types::core::{TransactionBuilder, TransactionView};
 use ckb_testtool::ckb_types::packed::{CellDep, CellInput, CellOutput};
 use ckb_testtool::ckb_types::prelude::{Builder, Entity, Pack};
 use ckb_testtool::context::Context;
-use crate::Loader;
+use std::time::Instant;
 const MAX_CYCLES: u64 = 1_000_000_000_000;
 fn build_test_context(
     vk: Bytes,

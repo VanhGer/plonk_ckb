@@ -1,35 +1,29 @@
-use std::{sync::Arc, usize, vec};
+use std::{usize, vec};
 use std::collections::HashMap;
 
 use ark_bls12_381::Fr;
 use ark_ff::One;
 use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial};
+use ark_poly::univariate::DensePolynomial;
 
-use crate::compiled_circuit::CompiledCircuit;
 use crate::constraint::{CopyConstraints, GateConstraints};
 use crate::gate::{Gate, Position};
 
 // Represents a circuit consisting of gates and values.
 #[derive(PartialEq, Debug)]
-pub struct Circuit {
+pub struct CPICircuit {
     gates: Vec<Gate>,
-    vals: Vec<Arc<Vec<Fr>>>,
 }
 
-impl Default for Circuit {
+impl Default for CPICircuit {
     fn default() -> Self {
         Self {
             gates: Vec::default(),
-            vals: vec![
-                Arc::new(Vec::default()),
-                Arc::new(Vec::default()),
-                Arc::new(Vec::default()),
-            ],
         }
     }
 }
 
-impl Circuit {
+impl CPICircuit {
     pub const VEC_A: &'static str = "vec_a";
     pub const VEC_B: &'static str = "vec_b";
     pub const VEC_C: &'static str = "vec_c";
@@ -41,18 +35,15 @@ impl Circuit {
     pub const VEC_PI: &'static str = "vec_pi";
 }
 
-impl Circuit {
+impl CPICircuit {
     /// Adds an addition gate to the circuit.
     pub fn add_addition_gate(
         mut self,
-        a: (usize, usize, Fr),
-        b: (usize, usize, Fr),
-        c: (usize, usize, Fr),
+        a: (usize, usize),
+        b: (usize, usize),
+        c: (usize, usize),
         pi: Fr,
     ) -> Self {
-        Arc::get_mut(&mut self.vals[0]).unwrap().push(a.2);
-        Arc::get_mut(&mut self.vals[1]).unwrap().push(b.2);
-        Arc::get_mut(&mut self.vals[2]).unwrap().push(c.2);
 
         let gate = Gate::new_add_gate(
             Position::Pos(a.0, a.1),
@@ -67,42 +58,16 @@ impl Circuit {
     /// Adds a multiplication gate to the circuit.
     pub fn add_multiplication_gate(
         mut self,
-        a: (usize, usize, Fr),
-        b: (usize, usize, Fr),
-        c: (usize, usize, Fr),
+        a: (usize, usize),
+        b: (usize, usize),
+        c: (usize, usize),
         pi: Fr,
     ) -> Self {
-        Arc::get_mut(&mut self.vals[0]).unwrap().push(a.2);
-        Arc::get_mut(&mut self.vals[1]).unwrap().push(b.2);
-        Arc::get_mut(&mut self.vals[2]).unwrap().push(c.2);
 
         let gate = Gate::new_mult_gate(
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),
             Position::Pos(c.0, c.1),
-            Some(pi),
-        );
-        self.gates.push(gate);
-        self
-    }
-
-    /// Adds a constant gate to the circuit.
-    pub fn add_constant_gate(
-        mut self,
-        a: (usize, usize, Fr),
-        b: (usize, usize, Fr),
-        c: (usize, usize, Fr),
-        pi: Fr,
-    ) -> Self {
-        Arc::get_mut(&mut self.vals[0]).unwrap().push(a.2);
-        Arc::get_mut(&mut self.vals[1]).unwrap().push(b.2);
-        Arc::get_mut(&mut self.vals[2]).unwrap().push(c.2);
-
-        let gate = Gate::new_constant_gate(
-            Position::Pos(a.0, a.1),
-            Position::Pos(b.0, b.1),
-            Position::Pos(c.0, c.1),
-            a.2,
             Some(pi),
         );
         self.gates.push(gate);
@@ -118,9 +83,6 @@ impl Circuit {
     /// Gets the assignment of the circuit
     pub(crate) fn get_assignment(&self) -> HashMap<&str, Vec<Fr>> {
         let mut result = HashMap::default();
-        result.insert(Self::VEC_A, vec![]);
-        result.insert(Self::VEC_B, vec![]);
-        result.insert(Self::VEC_C, vec![]);
         result.insert(Self::VEC_QL, vec![]);
         result.insert(Self::VEC_QR, vec![]);
         result.insert(Self::VEC_QM, vec![]);
@@ -133,9 +95,6 @@ impl Circuit {
             if gate.is_dummy_gate() {
                 continue;
             }
-            result.get_mut(Self::VEC_A).unwrap().push(self.vals[0][i]);
-            result.get_mut(Self::VEC_B).unwrap().push(self.vals[1][i]);
-            result.get_mut(Self::VEC_C).unwrap().push(self.vals[2][i]);
             result.get_mut(Self::VEC_QL).unwrap().push(gate.q_l);
             result.get_mut(Self::VEC_QR).unwrap().push(gate.q_r);
             result.get_mut(Self::VEC_QM).unwrap().push(gate.q_m);
@@ -216,7 +175,7 @@ impl Circuit {
     }
 
     /// Compiles the circuit into a compiled circuit.
-    pub fn compile(mut self) -> Result<CompiledCircuit, String> {
+    pub fn compile(mut self) -> Result<(GateConstraints, CopyConstraints, usize), String> {
         self = self.pad_circuit();
 
         let circuit_size = self.gates.len();
@@ -230,9 +189,9 @@ impl Circuit {
             .collect::<HashMap<_, _>>();
 
         let gate_constraints = GateConstraints::new(
-            interpolated_assignment.remove(Self::VEC_A).unwrap(),
-            interpolated_assignment.remove(Self::VEC_B).unwrap(),
-            interpolated_assignment.remove(Self::VEC_C).unwrap(),
+            DensePolynomial::<Fr>::default(),
+            DensePolynomial::<Fr>::default(),
+            DensePolynomial::<Fr>::default(),
             interpolated_assignment.remove(Self::VEC_QL).unwrap(),
             interpolated_assignment.remove(Self::VEC_QR).unwrap(),
             interpolated_assignment.remove(Self::VEC_QO).unwrap(),
@@ -243,8 +202,7 @@ impl Circuit {
 
         let copy_constraints = self.cal_permutation();
 
-        Ok(CompiledCircuit::new(
-            gate_constraints,
+        Ok((gate_constraints,
             copy_constraints,
             // srs,
             circuit_size,
@@ -257,33 +215,38 @@ impl Circuit {
 }
 
 #[cfg(test)]
-#[test]
-fn create_circuit_test() {
-    let circuit = Circuit::default()
-        .add_multiplication_gate(
-            (0, 0, Fr::from(1)),
-            (0, 0, Fr::from(1)),
-            (2, 0, Fr::from(1)),
-            Fr::from(0),
-        )
-        .add_multiplication_gate(
-            (0, 0, Fr::from(1)),
-            (1, 1, Fr::from(2)),
-            (2, 1, Fr::from(2)),
-            Fr::from(0),
-        )
-        .add_addition_gate(
-            (2, 1, Fr::from(2)),
-            (1, 2, Fr::from(-3)),
-            (2, 2, Fr::from(-1)),
-            Fr::from(0),
-        )
-        .add_addition_gate(
-            (2, 0, Fr::from(1)),
-            (2, 2, Fr::from(-1)),
-            (2, 3, Fr::from(0)),
-            Fr::from(0),
-        );
+mod tests {
+    use ark_bls12_381::Fr;
 
-    assert_eq!(circuit.vals[0][2], circuit.vals[2][1]);
+    use crate::common_preprocessed_input::cpi_circuit::CPICircuit;
+
+    #[test]
+    fn create_circuit_test() {
+        let parserCircuit = CPICircuit::default()
+            .add_multiplication_gate(
+                (0, 0),
+                (0, 0),
+                (2, 0),
+                Fr::from(0),
+            )
+            .add_multiplication_gate(
+                (0, 0),
+                (1, 1),
+                (2, 1),
+                Fr::from(0),
+            )
+            .add_addition_gate(
+                (2, 1),
+                (1, 2),
+                (2, 2),
+                Fr::from(0),
+            )
+            .add_addition_gate(
+                (2, 0),
+                (2, 2),
+                (2, 3),
+                Fr::from(0),
+            );
+        parserCircuit.compile().unwrap();
+    }
 }

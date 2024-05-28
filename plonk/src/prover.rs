@@ -2,10 +2,10 @@ use std::ops::{Add, Div, Mul};
 
 use ark_bls12_381::Fr;
 use ark_ff::{Field, UniformRand, Zero};
-use ark_poly::univariate::{DenseOrSparsePolynomial, DensePolynomial};
 use ark_poly::{
     DenseUVPolynomial, EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial as Poly,
 };
+use ark_poly::univariate::{DenseOrSparsePolynomial, DensePolynomial};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use digest::Digest;
 use sha2::Sha256;
