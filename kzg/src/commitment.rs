@@ -1,5 +1,6 @@
-use crate::types::G1Point;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+
+use crate::types::G1Point;
 
 /// Commitment contains result
 #[derive(Debug, Clone, PartialEq, Eq, CanonicalDeserialize, CanonicalSerialize)]

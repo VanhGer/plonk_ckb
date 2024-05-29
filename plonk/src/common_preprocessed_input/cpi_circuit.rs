@@ -44,7 +44,6 @@ impl CPICircuit {
         c: (usize, usize),
         pi: Fr,
     ) -> Self {
-
         let gate = Gate::new_add_gate(
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),
@@ -63,7 +62,6 @@ impl CPICircuit {
         c: (usize, usize),
         pi: Fr,
     ) -> Self {
-
         let gate = Gate::new_mult_gate(
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),

@@ -3,8 +3,8 @@ use std::marker::PhantomData;
 use ark_bls12_381::Fr;
 use ark_ff::UniformRand;
 use ark_serialize::{CanonicalSerialize, Write};
-use rand::rngs::StdRng;
-use rand::SeedableRng;
+use ark_std::rand::rngs::StdRng;
+use ark_std::rand::SeedableRng;
 use sha2::Digest;
 
 use kzg::commitment::KzgCommitment;

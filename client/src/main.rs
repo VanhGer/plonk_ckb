@@ -2,36 +2,36 @@ use std::collections::HashMap;
 use std::error::Error as StdErr;
 use std::str::FromStr;
 
-mod const_value;
-mod plonk_generator;
-
 use ckb_hash::blake2b_256;
 use ckb_jsonrpc_types as json_types;
 use ckb_sdk::{
+    Address,
     constants::SIGHASH_TYPE_HASH,
+    HumanCapacity,
     rpc::CkbRpcClient,
-    traits::{
+    ScriptId,
+    SECP256K1, traits::{
         DefaultCellCollector, DefaultCellDepResolver, DefaultHeaderDepResolver,
         DefaultTransactionDependencyProvider, SecpCkbRawKeySigner,
-    },
-    tx_builder::{transfer::CapacityTransferBuilder, CapacityBalancer, TxBuilder},
-    unlock::{ScriptUnlocker, SecpSighashUnlocker},
-    Address, HumanCapacity, ScriptId, SECP256K1,
+    }, tx_builder::{CapacityBalancer, transfer::CapacityTransferBuilder, TxBuilder}, unlock::{ScriptUnlocker, SecpSighashUnlocker},
 };
+use ckb_types::{
+    bytes::Bytes,
+    core::{BlockView, ScriptHashType, TransactionView},
+    H256,
+    packed::{CellOutput, Script, WitnessArgs},
+    prelude::*,
+};
+use ckb_types::packed::{Byte32, CellDepBuilder, OutPoint};
+use clap::Parser;
 
 use crate::const_value::const_value::{
     PLONK_VERIFIER_CODE_HASH, PLONK_VERIFIER_TX_HASH, TO_SHANNON,
 };
 use crate::plonk_generator::generate_plonk;
-use ckb_types::packed::{Byte32, CellDepBuilder, OutPoint};
-use ckb_types::{
-    bytes::Bytes,
-    core::{BlockView, ScriptHashType, TransactionView},
-    packed::{CellOutput, Script, WitnessArgs},
-    prelude::*,
-    H256,
-};
-use clap::Parser;
+
+mod const_value;
+mod plonk_generator;
 
 /// Transfer some CKB from one sighash address to other address
 /// # Example:
@@ -40,23 +40,22 @@ use clap::Parser;
 ///       --receiver <address> \
 ///       --capacity 61.0
 ///
-
 #[derive(Parser, Debug)]
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// The sender private key (hex string)
     #[clap(
-        long,
-        value_name = "KEY",
-        default_value = "a5808e79c243d8e026a034273ad7a5ccdcb2f982392fd0230442b1734c98a4c2"
+    long,
+    value_name = "KEY",
+    default_value = "ace08599f3174f4376ae51fdc30950d4f2d731440382bb0aa1b6b0bd3a9728cd"
     )]
     sender_key: H256,
 
     /// The receiver address
     #[clap(
-        long,
-        value_name = "ADDRESS",
-        default_value = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsq2prryvze6fhufxkgjx35psh7w70k3hz7c3mtl4d"
+    long,
+    value_name = "ADDRESS",
+    default_value = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvm52pxjfczywarv63fmjtyqxgs2syfffq2348ad"
     )]
     receiver: Address,
 
@@ -99,7 +98,6 @@ fn main() -> Result<(), Box<dyn StdErr>> {
     Ok(())
 }
 
-fn generate_plonk_proof() {}
 fn build_plonk_verifier_tx(
     args: &Args,
     sender: Script,
@@ -151,37 +149,27 @@ fn build_plonk_verifier_tx(
     let auto_success_script = Script::default();
 
     // Build the transaction
-    let (public_bytes, proof_bytes) = generate_plonk();
-    println!("publiclen: {:?}", public_bytes.len());
-    println!("prooflen: {:?}", proof_bytes.len());
+    let proof_bytes = generate_plonk();
 
     // compute capa = type_script.size + lock_script.size
     let init_capa = type_script.occupied_capacity().unwrap().as_u64()
         + auto_success_script.occupied_capacity().unwrap().as_u64();
 
-    // let le = capa.to_be_bytes().len();
-    // println!("le: {:?}", le);
 
     /// compute capa = type_script.size + lock_script.size + data.size
-    let cell1_capa = init_capa + (public_bytes.len() as u64) * TO_SHANNON;
-    let cell2_capa = init_capa + (proof_bytes.len() as u64) * TO_SHANNON;
+    let cell_capa = init_capa + (proof_bytes.len() as u64) * TO_SHANNON;
 
     /// capa = type_script.size + lock_script.size + data.size + capa.size
     /// send public and proof
     let output_cells = vec![
         CellOutput::new_builder()
-            .capacity((cell1_capa + (cell1_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
+            .capacity((cell_capa + (cell_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
             .lock(auto_success_script.clone())
             .type_(Some(type_script.clone()).pack())
             .build(),
-        CellOutput::new_builder()
-            .capacity((cell2_capa + (cell2_capa.to_be_bytes().len() as u64) * TO_SHANNON).pack())
-            .lock(auto_success_script.clone())
-            // .type_(Some(type_script.clone()).pack())
-            .build(),
     ];
 
-    let outputs_data = vec![public_bytes, proof_bytes];
+    let outputs_data = vec![proof_bytes];
     let outputs: Vec<_> = output_cells
         .into_iter()
         .zip(outputs_data.into_iter())
@@ -200,96 +188,3 @@ fn build_plonk_verifier_tx(
 
     Ok(tx)
 }
-
-// fn build_data_check_tx(
-//     args: &Args,
-//     sender: Script,
-//     sender_key: secp256k1::SecretKey,
-// ) -> Result<TransactionView, Box<dyn StdErr>> {
-//     // Build ScriptUnlocker
-//     let signer = SecpCkbRawKeySigner::new_with_secret_keys(vec![sender_key]);
-//     let sighash_unlocker = SecpSighashUnlocker::from(Box::new(signer) as Box<_>);
-//     let sighash_script_id = ScriptId::new_type(SIGHASH_TYPE_HASH.clone());
-//     let mut unlockers = HashMap::default();
-//     unlockers.insert(
-//         sighash_script_id,
-//         Box::new(sighash_unlocker) as Box<dyn ScriptUnlocker>,
-//     );
-//
-//     // Build CapacityBalancer
-//     let placeholder_witness = WitnessArgs::new_builder()
-//         .lock(Some(Bytes::from(vec![0u8; 65])).pack())
-//         .build();
-//     let balancer = CapacityBalancer::new_simple(sender, placeholder_witness, 1000);
-//
-//     // Build:
-//     //   * CellDepResolver
-//     //   * HeaderDepResolver
-//     //   * CellCollector
-//     //   * TransactionDependencyProvider
-//
-//     let tx = DATA_CHECK_TX_HASH.parse::<H256>().unwrap().0;
-//     let tx_hash = Byte32::from_slice(&tx).unwrap();
-//     let code = DATA_CHECK_CODE_HASH.parse::<H256>().unwrap().0;
-//     let code_hash = Byte32::from_slice(&code).unwrap();
-//
-//     let type_out_point = OutPoint::new(tx_hash, 0);
-//     let ckb_client = CkbRpcClient::new(args.ckb_rpc.as_str());
-//
-//     let type_script_id = ScriptId::new(code_hash.unpack(), ScriptHashType::Data2.into());
-//
-//     let type_cell_dep = CellDepBuilder::default().out_point(type_out_point).build();
-//
-//     let mut cell_dep_resolver = {
-//         let genesis_block = ckb_client.get_block_by_number(0.into())?.unwrap();
-//         DefaultCellDepResolver::from_genesis(&BlockView::from(genesis_block))?
-//     };
-//
-//     cell_dep_resolver.insert(type_script_id, type_cell_dep, String::from("data_check"));
-//     let header_dep_resolver = DefaultHeaderDepResolver::new(args.ckb_rpc.as_str());
-//     let mut cell_collector = DefaultCellCollector::new(args.ckb_rpc.as_str());
-//     let tx_dep_provider = DefaultTransactionDependencyProvider::new(args.ckb_rpc.as_str(), 10);
-//
-//     let type_script = Script::new_builder()
-//         .code_hash(code_hash)
-//         .hash_type(ScriptHashType::Data2.into())
-//         // .args(Bytes::from("apple").pack())
-//         .build();
-//
-//     let type_script_opt = ScriptOpt::new_builder()
-//         .set(Some(type_script)).build();
-//     //
-//     // println!("{:?}", type_script_opt);
-//
-//     let auto_success_script = Script::default();
-//
-//     // Build the transaction
-//     let output_cells = vec![
-//
-//         CellOutput::new_builder()
-//         .lock(auto_success_script.clone())
-//         .type_(type_script_opt.clone())
-//         .capacity(args.capacity.0.pack())
-//         .build(),
-//         CellOutput::new_builder()
-//         .lock(auto_success_script)
-//         .type_(type_script_opt)
-//         .capacity(args.capacity.0.pack())
-//         .build(),
-//     ];
-//     let outputs_data = vec![Bytes::from("applae"), Bytes::from("tomato")];
-//     let outputs = output_cells.into_iter().zip(outputs_data.into_iter()).collect();
-//
-//
-//     let builder = CapacityTransferBuilder::new(outputs);
-//     let (tx, still_locked_groups) = builder.build_unlocked(
-//         &mut cell_collector,
-//         &cell_dep_resolver,
-//         &header_dep_resolver,
-//         &tx_dep_provider,
-//         &balancer,
-//         &unlockers,
-//     )?;
-//     assert!(still_locked_groups.is_empty());
-//     Ok(tx)
-// }

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use ark_bls12_381::Fr;
 use ark_ff::One;
-use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial};
+use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain};
 
 use crate::compiled_circuit::CompiledCircuit;
 use crate::constraint::{CopyConstraints, GateConstraints};
