@@ -1,10 +1,11 @@
-use std::{usize, vec};
 use std::collections::HashMap;
+use std::sync::Arc;
+use std::{usize, vec};
 
 use ark_bls12_381::Fr;
 use ark_ff::One;
-use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial};
 use ark_poly::univariate::DensePolynomial;
+use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial};
 
 use crate::constraint::{CopyConstraints, GateConstraints};
 use crate::gate::{Gate, Position};
@@ -66,6 +67,26 @@ impl CPICircuit {
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),
             Position::Pos(c.0, c.1),
+            Some(pi),
+        );
+        self.gates.push(gate);
+        self
+    }
+
+    /// Adds a constant gate to the circuit.
+    pub fn add_constant_gate(
+        mut self,
+        a: (usize, usize),
+        b: (usize, usize),
+        c: (usize, usize),
+        value: Fr,
+        pi: Fr,
+    ) -> Self {
+        let gate = Gate::new_constant_gate(
+            Position::Pos(a.0, a.1),
+            Position::Pos(b.0, b.1),
+            Position::Pos(c.0, c.1),
+            value,
             Some(pi),
         );
         self.gates.push(gate);
@@ -200,7 +221,8 @@ impl CPICircuit {
 
         let copy_constraints = self.cal_permutation();
 
-        Ok((gate_constraints,
+        Ok((
+            gate_constraints,
             copy_constraints,
             // srs,
             circuit_size,
@@ -221,30 +243,10 @@ mod tests {
     #[test]
     fn create_circuit_test() {
         let parserCircuit = CPICircuit::default()
-            .add_multiplication_gate(
-                (0, 0),
-                (0, 0),
-                (2, 0),
-                Fr::from(0),
-            )
-            .add_multiplication_gate(
-                (0, 0),
-                (1, 1),
-                (2, 1),
-                Fr::from(0),
-            )
-            .add_addition_gate(
-                (2, 1),
-                (1, 2),
-                (2, 2),
-                Fr::from(0),
-            )
-            .add_addition_gate(
-                (2, 0),
-                (2, 2),
-                (2, 3),
-                Fr::from(0),
-            );
+            .add_multiplication_gate((0, 0), (0, 0), (2, 0), Fr::from(0))
+            .add_multiplication_gate((0, 0), (1, 1), (2, 1), Fr::from(0))
+            .add_addition_gate((2, 1), (1, 2), (2, 2), Fr::from(0))
+            .add_addition_gate((2, 0), (2, 2), (2, 3), Fr::from(0));
         parserCircuit.compile().unwrap();
     }
 }

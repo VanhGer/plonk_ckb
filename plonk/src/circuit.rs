@@ -1,5 +1,5 @@
-use std::{sync::Arc, usize, vec};
 use std::collections::HashMap;
+use std::{sync::Arc, usize, vec};
 
 use ark_bls12_381::Fr;
 use ark_ff::One;
