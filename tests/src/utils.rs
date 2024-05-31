@@ -37,16 +37,16 @@ fn build_test_context(
     let type_script_dep = CellDep::new_builder().out_point(contract_out_point).build();
 
     // prepare cells
-    let input_out_point = context.create_cell(
-        CellOutput::new_builder()
-            .capacity(((proof_file.len()) as u64).pack())
-            .lock(lock_script.clone())
-            .build(),
-        Bytes::new(),
-    );
-    let input = CellInput::new_builder()
-        .previous_output(input_out_point)
-        .build();
+    // let input_out_point = context.create_cell(
+    //     CellOutput::new_builder()
+    //         .capacity(((proof_file.len()) as u64).pack())
+    //         .lock(lock_script.clone())
+    //         .build(),
+    //     Bytes::new(),
+    // );
+    // let input = CellInput::new_builder()
+    //     .previous_output(input_out_point)
+    //     .build();
     let outputs = vec![
         CellOutput::new_builder()
             .capacity((proof_file.len() as u64).pack())
@@ -59,7 +59,7 @@ fn build_test_context(
 
     // build transaction
     let tx = TransactionBuilder::default()
-        .input(input)
+        // .input(input)
         .outputs(outputs)
         .outputs_data(outputs_data.pack())
         .cell_dep(lock_script_dep)

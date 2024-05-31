@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::error::Error as StdErr;
 use std::str::FromStr;
+use std::thread::sleep;
+use std::time::Duration;
 
 use ckb_hash::blake2b_256;
 use ckb_jsonrpc_types as json_types;
@@ -93,7 +95,11 @@ fn main() -> Result<(), Box<dyn StdErr>> {
     let _tx_hash = CkbRpcClient::new(args.ckb_rpc.as_str())
         .send_transaction(json_tx.inner, outputs_validator)
         .expect("send transaction");
+    sleep(Duration::from_secs(20));
+    let cur = CkbRpcClient::new(args.ckb_rpc.as_str()).get_transaction(_tx_hash.clone()).expect("Tx failed");
     println!(">>> tx sent! <<<");
+    println!("{:?}", _tx_hash);
+    println!("tx is: {:?}", cur);
 
     Ok(())
 }
@@ -150,6 +156,10 @@ fn build_plonk_verifier_tx(
 
     // Build the transaction
     let proof_bytes = generate_plonk();
+
+    // let mut fake_proof = proof_bytes.clone().to_vec();
+    // fake_proof[0] = 13;
+    // let fake_proof_bytes: Bytes = fake_proof.into();
 
     // compute capa = type_script.size + lock_script.size
     let init_capa = type_script.occupied_capacity().unwrap().as_u64()

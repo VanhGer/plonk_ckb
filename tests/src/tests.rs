@@ -24,9 +24,11 @@ fn test_plonk_contract() {
 
     let mut parser = Parser::default();
     parser.add_witness("x", Fr::from(3));
+    parser.add_witness("y", Fr::from(2));
+    parser.add_witness("z", Fr::from(5));
 
     // generate proof
-    let compiled_circuit = parser.parse("x^3 + x + 5 = 35").compile().unwrap();
+    let compiled_circuit = parser.parse("x + y + z*z = 30").compile().unwrap();
     let proof = prover::generate_proof::<Sha256>(&compiled_circuit);
 
     let mut proof_bytes = Vec::new();

@@ -2,11 +2,13 @@
 resolver = "2"
 
 members = [
-    "contracts/plonk_verifier",
+    "contracts/*",
     "tests",
-    "client",
     "plonk",
-    "kzg"
+    "kzg",
+#    "verifier_client",
+    "prover_client",
+#    "test_plonk"
 ]
 
 [profile.release]

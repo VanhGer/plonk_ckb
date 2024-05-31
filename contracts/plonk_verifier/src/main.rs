@@ -63,6 +63,8 @@ fn program_entry() -> i8 {
         Err(_) => return Error::Encoding as i8,
     };
 
+    // return 0;
+
     let new_s = Vec::<u8>::from(SRS);
     let srs = Srs::deserialize_compressed(&new_s[..]).unwrap();
     //

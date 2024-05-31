@@ -16,7 +16,7 @@ pub fn plonk_verify<T: Digest + Default>(
     cip: CommonPreprocessedInput,
     srs: Srs,
 ) -> Result<(), Error> {
-    return Ok(());
+    // return Ok(());
     let scheme = KzgScheme::new(srs.clone());
 
     let com_q_m = scheme.commit(&cip.q_mx);
