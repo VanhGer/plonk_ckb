@@ -137,11 +137,10 @@ impl CommonPreprocessedInput {
 pub struct CPIParser {}
 
 impl CPIParser {
-    /// Parse string into circuit
-    ///
-    /// ```
-    /// ```
-    pub fn parse(self, input: &str) {
+
+    /// Compute common_preprocessed_input and
+    /// deserialize it into vec<u8>
+    pub fn compute_common_preprocessed_input(self, input: &str) -> Vec<u8>{
         let input = Self::parse_string(input);
         let input = &input;
 
@@ -156,10 +155,19 @@ impl CPIParser {
         let mut bytes = Vec::new();
 
         common_preprocessed_input.serialize_compressed(&mut bytes).unwrap();
+        bytes
+    }
+
+
+    /// Parse string into cpi bytes and write it
+    /// into a file.
+    pub fn parse_cpi_into_file(self, input: &str) {
+        let cpi_bytes = self.compute_common_preprocessed_input(input);
+
         let str = format!(
             "pub const COMMON_PROCESSED_INPUT:[u8;{}] = {:?};",
-            bytes.len(),
-            &bytes
+            cpi_bytes.len(),
+            &cpi_bytes
         );
         fs::write("src/common_processed_input_const.rs", str).expect("write failed");
     }
@@ -405,7 +413,7 @@ mod tests {
         let str = "x*y+3*x^2+x*y*z=11";
 
         // Common preprocessed input parser
-        CPIParser::default().parse(str);
+        CPIParser::default().parse_cpi_into_file(str);
         let vec = Vec::<u8>::from(COMMON_PROCESSED_INPUT);
         let cpi = CommonPreprocessedInput::deserialize_compressed(&vec[..]).unwrap();
 
