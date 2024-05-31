@@ -7,7 +7,9 @@ use ark_poly::univariate::DensePolynomial;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
 use crate::common_preprocessed_input::cpi_circuit::CPICircuit;
-use crate::common_preprocessed_input::cpi_parser::TypeOfCircuit::{Addition, Multiplication};
+use crate::common_preprocessed_input::cpi_parser::TypeOfCircuit::{
+    Addition, Constant, Multiplication,
+};
 use crate::constraint::{CopyConstraints, GateConstraints};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
@@ -15,7 +17,7 @@ use crate::constraint::{CopyConstraints, GateConstraints};
 enum TypeOfCircuit {
     Addition,
     Multiplication,
-    _Constant,
+    Constant,
 }
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
@@ -31,7 +33,12 @@ struct ParserGate {
 }
 
 impl ParserGate {
-    fn new(left: ParserWire, right: ParserWire, bottom: ParserWire, type_of_circuit: TypeOfCircuit) -> Self {
+    fn new(
+        left: ParserWire,
+        right: ParserWire,
+        bottom: ParserWire,
+        type_of_circuit: TypeOfCircuit,
+    ) -> Self {
         ParserGate {
             left,
             right,
@@ -137,10 +144,9 @@ impl CommonPreprocessedInput {
 pub struct CPIParser {}
 
 impl CPIParser {
-
     /// Compute common_preprocessed_input and
     /// deserialize it into vec<u8>
-    pub fn compute_common_preprocessed_input(self, input: &str) -> Vec<u8>{
+    pub fn compute_common_preprocessed_input(self, input: &str) -> Vec<u8> {
         let input = Self::parse_string(input);
         let input = &input;
 
@@ -154,10 +160,11 @@ impl CPIParser {
 
         let mut bytes = Vec::new();
 
-        common_preprocessed_input.serialize_compressed(&mut bytes).unwrap();
+        common_preprocessed_input
+            .serialize_compressed(&mut bytes)
+            .unwrap();
         bytes
     }
-
 
     /// Parse string into cpi bytes and write it
     /// into a file.
@@ -199,7 +206,15 @@ impl CPIParser {
                 split_list
                     .split('*')
                     .map(|s| s.trim().to_string())
-                    .map(|s| ParserWire::new(s.clone()))
+                    .map(|s| {
+                        self.check_constant(
+                            &mut gate_list.borrow_mut(),
+                            &mut gate_set.borrow_mut(),
+                            &mut position_map.borrow_mut(),
+                            s.clone(),
+                        );
+                        ParserWire::new(s.clone())
+                    })
                     .collect::<Vec<ParserWire>>()
             })
             .map(|multi_collections| {
@@ -214,8 +229,12 @@ impl CPIParser {
                             format!("{}*{}", &left.value_string, &right.value_string),
                             // left.value_fr * right.value_fr,
                         );
-                        let gate =
-                            ParserGate::new(left.clone(), right.clone(), result.clone(), Multiplication);
+                        let gate = ParserGate::new(
+                            left.clone(),
+                            right.clone(),
+                            result.clone(),
+                            Multiplication,
+                        );
                         if gate_set.get(&gate).is_some() {
                             return result;
                         }
@@ -303,7 +322,13 @@ impl CPIParser {
                     result = result.add_multiplication_gate(left, right, bottom, Fr::from(0));
                 }
                 Constant => {
-                    // result = result.add_constant_gate(left, right, bottom, Fr::from(0));
+                    result = result.add_constant_gate(
+                        left,
+                        right,
+                        bottom,
+                        Fr::from(gate.clone().left.value_string.parse::<i32>().unwrap()),
+                        Fr::from(0),
+                    );
                 }
             }
             #[cfg(test)]
@@ -324,9 +349,7 @@ impl CPIParser {
         right: ParserWire,
     ) -> ParserWire {
         let gate_number = gate_list.len();
-        let result = ParserWire::new(
-            format!("{}+{}", &left.value_string, &right.value_string),
-        );
+        let result = ParserWire::new(format!("{}+{}", &left.value_string, &right.value_string));
         let gate = ParserGate::new(left.clone(), right.clone(), result.clone(), Addition);
         //if this gate already exist, skip this move
         if gate_set.get(&gate).is_some() {
@@ -339,6 +362,54 @@ impl CPIParser {
         Self::push_into_position_map_or_insert(1, gate_number, position_map, &right.value_string);
         Self::push_into_position_map_or_insert(2, gate_number, position_map, &result.value_string);
         result
+    }
+
+    /// Generate constant gate
+    ///
+    /// Take in `value` to make constant gate.
+    /// Constant gate ensure the prover send the correct polynomial
+    fn generate_constant_gate(
+        &self,
+        gate_list: &mut Vec<ParserGate>,
+        gate_set: &mut HashSet<ParserGate>,
+        position_map: &mut HashMap<String, Vec<(usize, usize)>>,
+        value: ParserWire,
+    ) -> ParserWire {
+        let gate_number = gate_list.len();
+        let right = ParserWire::new("0".to_string());
+        let result = ParserWire::new(format!("{}+{}", &value.value_string, "0"));
+        let gate = ParserGate::new(value.clone(), right.clone(), result.clone(), Constant);
+        //if this gate already exist, skip this move
+        if gate_set.get(&gate).is_some() {
+            return result;
+        }
+        gate_list.push(gate.clone());
+        gate_set.insert(gate);
+
+        Self::push_into_position_map_or_insert(0, gate_number, position_map, &value.value_string);
+        Self::push_into_position_map_or_insert(1, gate_number, position_map, "0");
+        Self::push_into_position_map_or_insert(2, gate_number, position_map, &result.value_string);
+        result
+    }
+
+    fn check_constant(
+        &self,
+        gate_list: &mut Vec<ParserGate>,
+        gate_set: &mut HashSet<ParserGate>,
+        position_map: &mut HashMap<String, Vec<(usize, usize)>>,
+        value: String,
+    ) {
+        match value.parse::<i32>() {
+            Ok(number) => {
+                self.generate_constant_gate(
+                    gate_list,
+                    gate_set,
+                    position_map,
+                    ParserWire::new(value),
+                );
+            }
+            Err(err) => {}
+        };
     }
 
     /// Insert a pair of (x, y) corresponding to [wire_number] and [gate_number] into [position_map] by checking if it exists in the map or not
@@ -403,7 +474,7 @@ mod tests {
     use ark_bls12_381::Fr;
     use ark_serialize::CanonicalDeserialize;
 
-    use crate::common_preprocessed_input::cpi_parser::{CommonPreprocessedInput, CPIParser};
+    use crate::common_preprocessed_input::cpi_parser::{CPIParser, CommonPreprocessedInput};
     use crate::common_processed_input_const::COMMON_PROCESSED_INPUT;
     use crate::parser::Parser;
 
