@@ -125,9 +125,9 @@ fn build_plonk_verifier_tx(
         .build();
     let balancer = CapacityBalancer::new_simple(sender, placeholder_witness, 1000);
 
-    let tx = PLONK_VERIFIER_TX_HASH.parse::<H256>().unwrap().0;
+    let tx = PLONK_VERIFIER_TX_HASH[2..].parse::<H256>().unwrap().0;
     let tx_hash = Byte32::from_slice(&tx).unwrap();
-    let code = PLONK_VERIFIER_CODE_HASH.parse::<H256>().unwrap().0;
+    let code = PLONK_VERIFIER_CODE_HASH[2..].parse::<H256>().unwrap().0;
     let code_hash = Byte32::from_slice(&code).unwrap();
 
     let type_out_point = OutPoint::new(tx_hash, 0);

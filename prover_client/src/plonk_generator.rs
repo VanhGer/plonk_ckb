@@ -8,12 +8,12 @@ use plonk::prover;
 
 pub fn generate_plonk() -> Bytes {
     let mut parser = Parser::default();
-    parser.add_witness("x", Fr::from(3));
+    parser.add_witness("x", Fr::from(0));
     parser.add_witness("y", Fr::from(2));
-    parser.add_witness("z", Fr::from(5));
+    parser.add_witness("z", Fr::from(2));
 
     // generate proof
-    let compiled_circuit = parser.parse("x + y + z*z = 30").compile().unwrap();
+    let compiled_circuit = parser.parse("x + y*y + 3*z = 10").compile().unwrap();
     let proof = prover::generate_proof::<Sha256>(&compiled_circuit);
 
     let mut proof_bytes = Vec::new();

@@ -85,7 +85,7 @@ clean:
 
 TEMPLATE_TYPE := --git
 TEMPLATE_REPO := https://github.com/cryptape/ckb-script-templates
-CRATE :=
+#CRATE := ccc
 TEMPLATE := contract
 DESTINATION := contracts
 generate:
