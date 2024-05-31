@@ -22,9 +22,9 @@ pub mod const_value {
     pub const DATA_CHECK_TX_HASH: &str =
         "9076cf93200c0a58d83a3dc448a691ff1168caf609d26eb5932c2a7fc3dc212c";
     pub const PLONK_VERIFIER_CODE_HASH: &str =
-        "c66e530b22b999e03fd603eeedb973a99cd1e35c89b5e352ea25d0c241aa6e82";
+        "0x238ff9692f2b486a2fcb72f8a61532f7ffcb6177a86ec5b0b1e029209469a4af";
     pub const PLONK_VERIFIER_TX_HASH: &str =
-        "05588d2a15d4ce8aac5c040b0b6b0539742aa518404acd5ba00a2a3bb6505a00";
+        "0x9093d76f0faecf6209c1b31501d0b94ec412357fd56687d87f73e1d1f6e632d1";
 
     pub const TO_SHANNON: u64 = 100000000;
 }

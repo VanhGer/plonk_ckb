@@ -6,7 +6,7 @@ members = [
     "tests",
     "plonk",
     "kzg",
-#    "verifier_client",
+    "verifier_client",
     "prover_client",
 #    "test_plonk"
 ]
