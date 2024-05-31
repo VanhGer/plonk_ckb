@@ -14,7 +14,7 @@ use crate::utils::proving_test;
 //     prelude::*,
 // };
 
-pub(crate) const MAX_CYCLES: u64 = 1_000_000_000_000;
+pub(crate) const MAX_CYCLES: u64 = 3_500_000_000;
 
 
 #[test]

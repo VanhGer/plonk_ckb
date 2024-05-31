@@ -92,10 +92,25 @@ fn main() -> Result<(), Box<dyn StdErr>> {
     let json_tx = json_types::TransactionView::from(tx);
     // println!("tx: {}", serde_json::to_string_pretty(&json_tx).unwrap());
     let outputs_validator = Some(json_types::OutputsValidator::Passthrough);
-    let _tx_hash = CkbRpcClient::new(args.ckb_rpc.as_str())
+    let rpcClient = CkbRpcClient::new(args.ckb_rpc.as_str());
+    let _tx_hash = rpcClient
         .send_transaction(json_tx.inner, outputs_validator)
         .expect("send transaction");
-    sleep(Duration::from_secs(20));
+    let mut count = 0;
+    let mut last_state = String::new();
+    loop {
+        sleep(Duration::from_secs(1));
+        match rpcClient.get_pool_tx_detail_info(_tx_hash.clone()).unwrap().entry_status.as_str() {
+            "unknown" => {
+                if last_state == "proposed" {
+                    break;
+                }
+            }
+            str => last_state = String::from(str)
+        }
+        count += 1;
+    }
+    println!("transaction take: {} secs", count);
     let cur = CkbRpcClient::new(args.ckb_rpc.as_str()).get_transaction(_tx_hash.clone()).expect("Tx failed");
     println!(">>> tx sent! <<<");
     println!("{:?}", _tx_hash);
