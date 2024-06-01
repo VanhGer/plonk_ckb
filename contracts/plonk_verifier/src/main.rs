@@ -22,7 +22,7 @@ use ckb_std::default_alloc;
 use ckb_std::high_level::load_cell_data;
 use sha2::Sha256;
 
-use crate::common_processed_input_const::COMMON_PROCESSED_INPUT;
+use crate::common_preprocessed_input_const::COMMON_PREPROCESSED_INPUT;
 use crate::data_structures::{CommonPreprocessedInput, Proof, Srs};
 use crate::error::Error;
 use crate::srs_const::SRS;
@@ -38,7 +38,7 @@ mod data_structures;
 mod verify;
 mod srs_const;
 mod challenge;
-mod common_processed_input_const;
+mod common_preprocessed_input_const;
 
 
 /// program entry
@@ -57,7 +57,7 @@ fn program_entry() -> i8 {
     };
     //
     debug!("deserialize cpi");
-    let cpi_const = Vec::<u8>::from(COMMON_PROCESSED_INPUT);
+    let cpi_const = Vec::<u8>::from(COMMON_PREPROCESSED_INPUT);
     let cpi = match CommonPreprocessedInput::deserialize_compressed_unchecked(&cpi_const[..]) {
         Ok(data) => data,
         Err(_) => return Error::Encoding as i8,

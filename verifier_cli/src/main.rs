@@ -42,7 +42,7 @@ struct Args {
     #[clap(
         long,
         value_name = "output",
-        default_value = "../local_script/src/common_processed_input_const.rs"
+        default_value = "../local_script/src/common_preprocessed_input_const"
     )]
     output: String,
 }

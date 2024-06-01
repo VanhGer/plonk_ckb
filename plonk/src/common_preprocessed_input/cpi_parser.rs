@@ -137,7 +137,7 @@ impl CommonPreprocessedInput {
     // }
 }
 
-/// String to common processed input parser
+/// String to common preprocessed input parser
 ///
 /// See parse function for usage
 #[derive(Default)]
@@ -172,11 +172,11 @@ impl CPIParser {
         let cpi_bytes = self.compute_common_preprocessed_input(input);
 
         let str = format!(
-            "pub const COMMON_PROCESSED_INPUT:[u8;{}] = {:?};",
+            "pub const COMMON_PREPROCESSED_INPUT:[u8;{}] = {:?};",
             cpi_bytes.len(),
             &cpi_bytes
         );
-        fs::write("src/common_processed_input_const.rs", str).expect("write failed");
+        fs::write("src/common_preprocessed_input_const.rs", str).expect("write failed");
     }
 
     /// Generate [gate_list] and [position_map] to prepare for coordinate pair accumulator
@@ -475,7 +475,7 @@ mod tests {
     use ark_serialize::CanonicalDeserialize;
 
     use crate::common_preprocessed_input::cpi_parser::{CPIParser, CommonPreprocessedInput};
-    use crate::common_processed_input_const::COMMON_PROCESSED_INPUT;
+    use crate::common_preprocessed_input_const::COMMON_PREPROCESSED_INPUT;
     use crate::parser::Parser;
 
     /// Test generated circuit with prover circuit
@@ -485,7 +485,7 @@ mod tests {
 
         // Common preprocessed input parser
         CPIParser::default().parse_cpi_into_file(str);
-        let vec = Vec::<u8>::from(COMMON_PROCESSED_INPUT);
+        let vec = Vec::<u8>::from(COMMON_PREPROCESSED_INPUT);
         let cpi = CommonPreprocessedInput::deserialize_compressed(&vec[..]).unwrap();
 
         // Prover parser
