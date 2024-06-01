@@ -31,9 +31,12 @@ export MODE
 export CLANG
 export BUILD_DIR
 
-default: build test
+default: build_contract test
 
-build:
+install:
+	cargo install --path cli
+
+build_contract:
 	@if [ "x$(CLEAN_BUILD_DIR_FIRST)" = "xtrue" ]; then \
 		echo "Cleaning $(BUILD_DIR) directory..."; \
 		rm -rf $(BUILD_DIR); \
@@ -41,11 +44,11 @@ build:
 	mkdir -p $(BUILD_DIR)
 	@set -eu; \
 	if [ "x$(CONTRACT)" = "x" ]; then \
-		for contract in $(wildcard contracts/*); do \
+		for contract in $(wildcard contract_templates/*); do \
 			$(MAKE) -e -C $$contract build; \
 		done; \
 	else \
-		$(MAKE) -e -C contracts/$(CONTRACT) build; \
+		$(MAKE) -e -C contract_templates/$(CONTRACT) build; \
 	fi
 
 # Run a single make task for a specific contract. For example:
@@ -53,7 +56,7 @@ build:
 # make run CONTRACT=stack-reorder TASK=adjust_stack_size STACK_SIZE=0x200000
 TASK :=
 run:
-	$(MAKE) -e -C contracts/$(CONTRACT) $(TASK)
+	$(MAKE) -e -C contract_templates/$(CONTRACT) $(TASK)
 
 # test, check, clippy and fmt here are provided for completeness,
 # there is nothing wrong invoking cargo directly instead of make.
@@ -109,7 +112,7 @@ prepare:
 
 # Generate checksum info for reproducible build
 CHECKSUM_FILE := build/checksums-$(MODE).txt
-checksum: build
+checksum: build_contract
 	sha256sum build/$(MODE)/* > $(CHECKSUM_FILE)
 
-.PHONY: build test check clippy fmt cargo clean prepare checksum
+.PHONY: build_contract test check clippy fmt cargo clean prepare checksum

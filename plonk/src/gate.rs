@@ -55,7 +55,7 @@ impl Gate {
     }
 
     /// Creates a new multiplication gate.
-    pub(crate) fn new_mult_gate(
+    pub(crate) fn new_mul_gate(
         a_pos: Position,
         b_pos: Position,
         c_pos: Position,

@@ -2,14 +2,14 @@ use std::fmt::{Debug, Display};
 use std::ops::{Add, Mul, Neg, Sub};
 
 use ark_bls12_381::{Bls12_381, Fr};
-use ark_ec::{AffineRepr, CurveGroup};
 use ark_ec::pairing::Pairing;
+use ark_ec::{AffineRepr, CurveGroup};
 use ark_poly::{DenseUVPolynomial, Polynomial};
 
 use crate::commitment::KzgCommitment;
 use crate::opening::KzgOpening;
 use crate::srs::Srs;
-use crate::types::{G1Point, Poly};
+use crate::types::{G1Point, G2Point, Poly};
 
 /// Implements the KZG polynomial commitment scheme.
 ///
@@ -123,6 +123,24 @@ impl KzgScheme {
         let pairing1 = Bls12_381::pairing(opening.0, a);
         let pairing2 = Bls12_381::pairing(b, g2);
         pairing1 == pairing2
+    }
+
+    /// Returns the generator point in G2.
+    ///
+    /// # Returns
+    ///
+    /// The generator point in G2.
+    pub fn g2(&self) -> G2Point {
+        self.0.g2()
+    }
+
+    /// Returns the generator point in G2 multiplied by the secret.
+    ///
+    /// # Returns
+    ///
+    /// The generator point in G2 multiplied by the secret.
+    pub fn g2s(&self) -> G2Point {
+        self.0.g2s()
     }
 }
 

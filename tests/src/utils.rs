@@ -3,7 +3,7 @@ use std::time::Instant;
 use ckb_testtool::builtin::ALWAYS_SUCCESS;
 use ckb_testtool::bytes::Bytes;
 use ckb_testtool::ckb_types::core::{TransactionBuilder, TransactionView};
-use ckb_testtool::ckb_types::packed::{CellDep, CellInput, CellOutput};
+use ckb_testtool::ckb_types::packed::{CellDep, CellOutput};
 use ckb_testtool::ckb_types::prelude::{Builder, Entity, Pack};
 use ckb_testtool::context::Context;
 
@@ -11,10 +11,7 @@ use crate::Loader;
 
 const MAX_CYCLES: u64 = 1_000_000_000_000;
 
-fn build_test_context(
-    proof_file: Bytes,
-    contract: &str,
-) -> (Context, TransactionView) {
+fn build_test_context(proof_file: Bytes, contract: &str) -> (Context, TransactionView) {
     // deploy contract.
     let mut context = Context::default();
     let contract_bin: Bytes = Loader::default().load_binary(contract);
@@ -47,15 +44,13 @@ fn build_test_context(
     // let input = CellInput::new_builder()
     //     .previous_output(input_out_point)
     //     .build();
-    let outputs = vec![
-        CellOutput::new_builder()
-            .capacity((proof_file.len() as u64).pack())
-            .lock(lock_script.clone())
-            .type_(Some(type_script).pack())
-            .build(),
-    ];
+    let outputs = vec![CellOutput::new_builder()
+        .capacity((proof_file.len() as u64).pack())
+        .lock(lock_script.clone())
+        .type_(Some(type_script).pack())
+        .build()];
 
-    let outputs_data = vec![proof_file];
+    let outputs_data = [proof_file];
 
     // build transaction
     let tx = TransactionBuilder::default()
