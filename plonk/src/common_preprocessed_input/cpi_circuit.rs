@@ -1,30 +1,21 @@
 use std::collections::HashMap;
-use std::sync::Arc;
-use std::{usize, vec};
 
 use ark_bls12_381::Fr;
 use ark_ff::One;
 use ark_poly::univariate::DensePolynomial;
-use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain, Polynomial};
+use ark_poly::{EvaluationDomain, Evaluations, GeneralEvaluationDomain};
 
 use crate::constraint::{CopyConstraints, GateConstraints};
 use crate::gate::{Gate, Position};
 
-// Represents a circuit consisting of gates and values.
-#[derive(PartialEq, Debug)]
+/// Represents a circuit consisting of gates and values.
+#[derive(PartialEq, Debug, Default)]
 pub struct CPICircuit {
     gates: Vec<Gate>,
 }
 
-impl Default for CPICircuit {
-    fn default() -> Self {
-        Self {
-            gates: Vec::default(),
-        }
-    }
-}
-
 impl CPICircuit {
+    // Constants for vector names
     pub const VEC_A: &'static str = "vec_a";
     pub const VEC_B: &'static str = "vec_b";
     pub const VEC_C: &'static str = "vec_c";
@@ -45,13 +36,12 @@ impl CPICircuit {
         c: (usize, usize),
         pi: Fr,
     ) -> Self {
-        let gate = Gate::new_add_gate(
+        self.gates.push(Gate::new_add_gate(
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),
             Position::Pos(c.0, c.1),
             Some(pi),
-        );
-        self.gates.push(gate);
+        ));
         self
     }
 
@@ -63,13 +53,12 @@ impl CPICircuit {
         c: (usize, usize),
         pi: Fr,
     ) -> Self {
-        let gate = Gate::new_mult_gate(
+        self.gates.push(Gate::new_mul_gate(
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),
             Position::Pos(c.0, c.1),
             Some(pi),
-        );
-        self.gates.push(gate);
+        ));
         self
     }
 
@@ -82,24 +71,22 @@ impl CPICircuit {
         value: Fr,
         pi: Fr,
     ) -> Self {
-        let gate = Gate::new_constant_gate(
+        self.gates.push(Gate::new_constant_gate(
             Position::Pos(a.0, a.1),
             Position::Pos(b.0, b.1),
             Position::Pos(c.0, c.1),
             value,
             Some(pi),
-        );
-        self.gates.push(gate);
+        ));
         self
     }
 
     /// Adds a dummy gate to the circuit.
     pub fn add_dummy_gate(&mut self) {
-        let gate = Gate::new_dummy_gate();
-        self.gates.push(gate);
+        self.gates.push(Gate::new_dummy_gate());
     }
 
-    /// Gets the assignment of the circuit
+    /// Gets the assignment of the circuit.
     pub(crate) fn get_assignment(&self) -> HashMap<&str, Vec<Fr>> {
         let mut result = HashMap::default();
         result.insert(Self::VEC_QL, vec![]);
@@ -109,8 +96,7 @@ impl CPICircuit {
         result.insert(Self::VEC_QC, vec![]);
         result.insert(Self::VEC_PI, vec![]);
 
-        for i in 0..self.gates.len() {
-            let gate = self.gates.get(i).unwrap();
+        for gate in &self.gates {
             if gate.is_dummy_gate() {
                 continue;
             }
@@ -126,7 +112,7 @@ impl CPICircuit {
 
     /// Finds the cosets for permutation.
     fn find_cosets(&self, len: usize) -> (Vec<Fr>, Vec<Fr>, Fr, Fr) {
-        let domain = <GeneralEvaluationDomain<Fr>>::new(len).unwrap();
+        let domain = GeneralEvaluationDomain::<Fr>::new(len).unwrap();
         let roots = domain.elements().collect::<Vec<_>>();
 
         let k1 = roots.first().unwrap() + &Fr::one();
@@ -140,11 +126,10 @@ impl CPICircuit {
     /// Calculates the Copy constraints.
     fn cal_permutation(&self) -> CopyConstraints {
         let len = self.gates.len();
-        let domain = <GeneralEvaluationDomain<Fr>>::new(len).unwrap();
+        let domain = GeneralEvaluationDomain::<Fr>::new(len).unwrap();
         let roots = domain.elements().collect::<Vec<_>>();
         let (coset1, coset2, k1, k2) = self.find_cosets(len);
 
-        // create sigma_1, sigma_2, and sigma_3
         let mut sigma_1 = roots.clone();
         let mut sigma_2 = coset1.clone();
         let mut sigma_3 = coset2.clone();
@@ -154,23 +139,26 @@ impl CPICircuit {
                 continue;
             }
 
-            let map_element = |pos: &Position| {
-                let Position::Pos(i_1, i_2) = pos else {
-                    todo!()
-                };
-
-                if *i_1 == 0 {
-                    roots[*i_2]
-                } else if *i_1 == 1 {
-                    coset1[*i_2]
-                } else {
-                    coset2[*i_2]
+            let map_element = |pos: &Position| -> Fr {
+                match pos {
+                    Position::Pos(i_1, i_2) => {
+                        if *i_1 == 0 {
+                            roots[*i_2]
+                        } else if *i_1 == 1 {
+                            coset1[*i_2]
+                        } else {
+                            coset2[*i_2]
+                        }
+                    }
+                    _ => {
+                        todo!()
+                    }
                 }
             };
 
-            *sigma_1.get_mut(index).unwrap() = map_element(gate.get_a_wire());
-            *sigma_2.get_mut(index).unwrap() = map_element(gate.get_b_wire());
-            *sigma_3.get_mut(index).unwrap() = map_element(gate.get_c_wire());
+            sigma_1[index] = map_element(gate.get_a_wire());
+            sigma_2[index] = map_element(gate.get_b_wire());
+            sigma_3[index] = map_element(gate.get_c_wire());
         }
 
         let s_sigma_1 = Evaluations::from_vec_and_domain(sigma_1, domain).interpolate();
@@ -183,9 +171,8 @@ impl CPICircuit {
     /// Pads the circuit with dummy gates to make its size a power of 2.
     fn pad_circuit(mut self) -> Self {
         let len = self.gates.len();
-
         let exponent = (len - 1).ilog2() + 1;
-        let new_len = 2_usize.pow(exponent);
+        let new_len = 1 << exponent;
 
         for _ in len..new_len {
             self.add_dummy_gate();
@@ -198,8 +185,8 @@ impl CPICircuit {
         self = self.pad_circuit();
 
         let circuit_size = self.gates.len();
-        let domain = <GeneralEvaluationDomain<Fr>>::new(circuit_size).unwrap();
-        // let srs = Srs::new(circuit_size);
+
+        let domain = GeneralEvaluationDomain::<Fr>::new(circuit_size).unwrap();
         let assignment = self.get_assignment();
 
         let mut interpolated_assignment = assignment
@@ -221,16 +208,11 @@ impl CPICircuit {
 
         let copy_constraints = self.cal_permutation();
 
-        Ok((
-            gate_constraints,
-            copy_constraints,
-            // srs,
-            circuit_size,
-        ))
+        Ok((gate_constraints, copy_constraints, circuit_size))
     }
 
     pub fn get_gates(&self) -> Vec<Gate> {
-        return self.gates.clone();
+        self.gates.clone()
     }
 }
 
@@ -242,11 +224,11 @@ mod tests {
 
     #[test]
     fn create_circuit_test() {
-        let parserCircuit = CPICircuit::default()
+        let parser_circuit = CPICircuit::default()
             .add_multiplication_gate((0, 0), (0, 0), (2, 0), Fr::from(0))
             .add_multiplication_gate((0, 0), (1, 1), (2, 1), Fr::from(0))
             .add_addition_gate((2, 1), (1, 2), (2, 2), Fr::from(0))
             .add_addition_gate((2, 0), (2, 2), (2, 3), Fr::from(0));
-        parserCircuit.compile().unwrap();
+        parser_circuit.compile().unwrap();
     }
 }

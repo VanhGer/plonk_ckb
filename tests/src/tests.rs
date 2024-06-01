@@ -1,6 +1,6 @@
 use ark_bls12_381::Fr;
 use ark_serialize::*;
-use ckb_testtool::ckb_types::prelude::{Builder, Entity};
+use kzg::srs::Srs;
 use sha2::Sha256;
 
 use plonk::prover;
@@ -16,7 +16,6 @@ use crate::utils::proving_test;
 
 pub(crate) const MAX_CYCLES: u64 = 3_500_000_000;
 
-
 #[test]
 fn test_plonk_contract() {
     use ark_bls12_381::Fr;
@@ -29,7 +28,8 @@ fn test_plonk_contract() {
 
     // generate proof
     let compiled_circuit = parser.parse("x + y + z*z = 30").compile().unwrap();
-    let proof = prover::generate_proof::<Sha256>(&compiled_circuit);
+    let srs = Srs::new(compiled_circuit.size);
+    let proof = prover::generate_proof::<Sha256>(&compiled_circuit, srs);
 
     let mut proof_bytes = Vec::new();
     proof.serialize_compressed(&mut proof_bytes).unwrap();
@@ -38,6 +38,4 @@ fn test_plonk_contract() {
         "plonk_verifier",
         "plonk_verifier verify",
     );
-
-    assert_eq!(1, 2);
 }
