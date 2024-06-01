@@ -1,5 +1,5 @@
 # create cpi: done
-cd verifier_client
+cd verifier_cli
 cargo run
 cd ..
 
