@@ -441,6 +441,7 @@ impl CPIParser {
         let string = string.to_lowercase();
         let mut result = String::new();
         let mut last_char = ' ';
+        let mut number_buffer = String::new();
         let mut flag = false;
         for char in string.chars() {
             if char == ' ' {
@@ -448,19 +449,33 @@ impl CPIParser {
             }
             if char == '^' {
                 flag = true;
-            } else if flag {
-                if char.is_numeric() {
-                    for _ in 0..char.to_string().parse::<i32>().unwrap() - 1 {
-                        result.push('*');
-                        result.push(last_char);
+            } else if !char.is_numeric() {
+                if flag {
+                    if !number_buffer.is_empty() {
+                        for _ in 0..number_buffer.parse::<i32>().unwrap() - 1 {
+                            result.push('*');
+                            result.push(last_char);
+                        }
+                        flag = false;
+                    } else {
+                        panic!("can't parse polynomial")
                     }
-                    flag = false;
-                } else {
-                    panic!("can't parse polynomial")
                 }
-            } else {
                 last_char = char;
                 result.push(char);
+                number_buffer = String::new();
+            } else {
+                number_buffer.push(char);
+                if !flag {
+                    last_char = char;
+                    result.push(char);
+                }
+            }
+        }
+        if flag && !number_buffer.is_empty() {
+            for _ in 0..number_buffer.parse::<i32>().unwrap() - 1 {
+                result.push('*');
+                result.push(last_char);
             }
         }
         result
@@ -511,11 +526,11 @@ mod tests {
         assert_eq!(cpi.pi_x, gate_constraint.pi_x().clone());
     }
 
-    // #[test]
-    // fn vjp() {
-    //     let str = "x^3 + x + 5 = 35";
-    //
-    //     // Common preprocessed input parser
-    //     CPIParser::default().parse(str);
-    // }
+    #[test]
+    fn vjp() {
+        let str = "x^100 + x^10 = x^2";
+
+        // Common preprocessed input parser
+        CPIParser::default().parse_cpi_into_file(str);
+    }
 }
