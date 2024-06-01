@@ -2,19 +2,13 @@
 resolver = "2"
 
 members = [
-    "contracts/*",
+    "contract_templates/*",
     "tests",
     "plonk",
     "kzg",
-    "verifier_client",
-    "prover_client",
-#    "test_plonk"
+    "cli",
 ]
 
-[profile.release]
-overflow-checks = true
-strip = true
-codegen-units = 1
-lto=true
-Zlocation-detail="none"
-opt-level="z"
+exclude = [
+    "debug"
+]

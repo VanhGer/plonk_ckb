@@ -16,9 +16,10 @@ pub fn plonk_verify<T: Digest + Default>(
     cip: CommonPreprocessedInput,
     srs: Srs,
 ) -> Result<(), Error> {
-    // return Ok(());
+    // Initialize the KZG scheme with the structured reference string (SRS)
     let scheme = KzgScheme::new(srs.clone());
 
+    // Commit to various polynomials
     let com_q_m = scheme.commit(&cip.q_mx);
     let com_q_l = scheme.commit(&cip.q_lx);
     let com_q_r = scheme.commit(&cip.q_rx);
@@ -30,23 +31,26 @@ pub fn plonk_verify<T: Digest + Default>(
 
     debug!("verify challenge");
 
-    let (alpha, beta, gamma, evaluation_challenge, v, u) =
-        verify_challenges::<T>(&proof, &scheme);
+    // Generate and verify challenges
+    let (alpha, beta, gamma, evaluation_challenge, v, u) = verify_challenges::<T>(&proof, &scheme);
 
+    // Check if 'u' challenge matches the proof
     if u != proof.u {
         return Err(Error::Verify);
     }
 
-
+    // Initialize evaluation domain
     let domain = <GeneralEvaluationDomain<Fr>>::new(cip.n).unwrap();
     let w = domain.element(1);
 
+    // Compute zero polynomial evaluation at the evaluation challenge point
     let z_h_e = evaluation_challenge.pow(BigInt::new([domain.size() as u64])) - Fr::from(1);
-    let l_1_e =
-        z_h_e / (Fr::from(cip.n as u128) * (evaluation_challenge - Fr::from(1)));
+    let l_1_e = z_h_e / (Fr::from(cip.n as u128) * (evaluation_challenge - Fr::from(1)));
     let p_i_e = cip.pi_x.evaluate(&evaluation_challenge);
 
     debug!("Compute r0");
+
+    // Compute r0 using the linearization polynomial
     let r_0 = p_i_e
         - l_1_e * alpha * alpha
         - alpha
@@ -65,12 +69,8 @@ pub fn plonk_verify<T: Digest + Default>(
 
     let d_line2 = proof.z_commit.mul(
         (proof.bar_a + beta * evaluation_challenge + gamma)
-            * (proof.bar_b
-            + beta * cip.k1 * evaluation_challenge
-            + gamma)
-            * (proof.bar_c
-            + beta * cip.k2 * evaluation_challenge
-            + gamma)
+            * (proof.bar_b + beta * cip.k1 * evaluation_challenge + gamma)
+            * (proof.bar_c + beta * cip.k2 * evaluation_challenge + gamma)
             * alpha
             + l_1_e * alpha * alpha
             + u,
@@ -105,6 +105,8 @@ pub fn plonk_verify<T: Digest + Default>(
         + com_s_sigma_2.mul(v * v * v * v * v);
 
     debug!("Compute [E]");
+
+    // Compute polynomial E using r0 and other linear combinations
     let e = -r_0
         + v * proof.bar_a
         + v * v * proof.bar_b
@@ -114,24 +116,32 @@ pub fn plonk_verify<T: Digest + Default>(
         + u * proof.bar_z_w;
     let e = scheme.commit_para(e);
 
-    debug!("Compute left side of paring");
+    debug!("Compute left side of pairing");
 
+    // Compute the left side of the pairing equation
     let pairing_left_side = Bls12_381::pairing(
         (proof.w_ev_x_commit.clone() + proof.w_ev_wx_commit.clone().mul(u)).0,
         srs.g2s(),
     );
 
-    debug!("Compute right side of paring");
+    debug!("Compute right side of pairing");
+
+    // Compute the right side of the pairing equation
     let pairing_right_side = Bls12_381::pairing(
         (proof.w_ev_x_commit.clone().mul(evaluation_challenge)
-            + proof.w_ev_wx_commit.clone()
+            + proof
+            .w_ev_wx_commit
+            .clone()
             .mul(u * evaluation_challenge * w)
-            + f - e).0,
+            + f
+            - e)
+            .0,
         srs.g2(),
     );
 
     debug!("Check pairing");
 
+    // Verify if both sides of the pairing equation are equal
     if pairing_left_side != pairing_right_side {
         return Err(Error::Verify);
     }
@@ -141,6 +151,7 @@ pub fn plonk_verify<T: Digest + Default>(
     Ok(())
 }
 
+// Function to generate and verify challenges from the proof
 fn verify_challenges<T: Digest + Default>(
     proof: &Proof,
     scheme: &KzgScheme,
@@ -150,7 +161,7 @@ fn verify_challenges<T: Digest + Default>(
         proof.b_commit.clone(),
         proof.c_commit.clone(),
     ];
-    let mut challenge = ChallengeGenerator::<T>::from_commitment(&commitments);
+    let mut challenge = ChallengeGenerator::<T>::from_commitments(&commitments);
     let [beta, gamma] = challenge.generate_challenges();
     challenge.feed(&proof.z_commit);
     let [alpha] = challenge.generate_challenges();
