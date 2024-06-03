@@ -100,6 +100,9 @@ fn main() -> Result<(), Box<dyn StdErr>> {
             str => last_state = String::from(str)
         }
         count += 1;
+        if count == 30 {
+            break;
+        }
     }
     println!("transaction takes: {} secs", count);
     let cur = CkbRpcClient::new(options.ckb_rpc.as_str()).get_transaction(tx_hash.clone()).expect("Tx failed");
