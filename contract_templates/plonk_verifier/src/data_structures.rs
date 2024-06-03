@@ -46,22 +46,6 @@ pub struct CommonPreprocessedInput {
     pub pi_x: Poly,
 }
 
-// pub struct CommonPreprocessedInput {
-//     n: usize,
-//     k1: Fr,
-//     k2: Fr,
-//     q_lx: DensePolynomial<Fr>,
-//     q_rx: DensePolynomial<Fr>,
-//     q_mx: DensePolynomial<Fr>,
-//     q_ox: DensePolynomial<Fr>,
-//     q_cx: DensePolynomial<Fr>,
-//     s_sigma_1: DensePolynomial<Fr>,
-//     s_sigma_2: DensePolynomial<Fr>,
-//     s_sigma_3: DensePolynomial<Fr>,
-//     pi_x: DensePolynomial<Fr>,
-// }
-
-
 pub struct KzgScheme(Srs);
 
 impl KzgScheme {

@@ -5,7 +5,6 @@ use ark_ec::{AffineRepr, CurveGroup};
 use ark_ff::{One, UniformRand};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
-use crate::srs_const::SRS;
 use crate::types::{G1Point, G2Point};
 
 /// Structured Reference String (SRS) used in the KZG scheme.
@@ -35,12 +34,6 @@ impl Srs {
     pub fn new(circuit_size: usize) -> Self {
         let s = Fr::rand(&mut rand::thread_rng());
         Self::new_from_secret(s, circuit_size)
-    }
-
-    pub fn load_srs() -> Self {
-        let new_s = Vec::<u8>::from(SRS);
-        let srs = Srs::deserialize_compressed_unchecked(&new_s[..]).unwrap();
-        srs
     }
 
     /// Generates a new SRS with the provided secret and the specified circuit size.

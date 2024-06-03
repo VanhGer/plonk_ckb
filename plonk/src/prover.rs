@@ -7,6 +7,8 @@ use ark_poly::{
 };
 use ark_poly::univariate::{DenseOrSparsePolynomial, DensePolynomial};
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
+use ark_std::rand::rngs::StdRng;
+use ark_std::rand::SeedableRng;
 use digest::Digest;
 use sha2::Sha256;
 
@@ -59,15 +61,14 @@ pub struct Proof {
 }
 
 /// Generates a proof for the compiled circuit.
-pub fn generate_proof<T: Digest + Default>(compiled_circuit: &CompiledCircuit) -> Proof {
+pub fn generate_proof<T: Digest + Default>(compiled_circuit: &CompiledCircuit, srs: Srs) -> Proof {
     println!("Generating proof...");
 
     // Round 1
     #[cfg(test)]
     println!("ROUND 1");
 
-    let mut rng = rand::thread_rng();
-    let srs = Srs::load_srs();
+    let mut rng = StdRng::from_entropy();
     let scheme = KzgScheme::new(srs);
     let domain = <GeneralEvaluationDomain<Fr>>::new(compiled_circuit.size).unwrap();
 

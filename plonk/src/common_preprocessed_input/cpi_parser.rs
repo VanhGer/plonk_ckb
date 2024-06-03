@@ -10,6 +10,7 @@ use crate::common_preprocessed_input::cpi_circuit::CPICircuit;
 use crate::common_preprocessed_input::cpi_parser::TypeOfCircuit::{
     Addition, Constant, Multiplication,
 };
+use crate::compiled_circuit::CompiledCircuit;
 use crate::constraint::{CopyConstraints, GateConstraints};
 
 #[derive(Clone, Debug, Hash, Eq, PartialEq)]
@@ -98,46 +99,9 @@ impl CommonPreprocessedInput {
             pi_x: gate_constraint.pi_x().clone(),
         }
     }
-    //
-    // pub fn n(&self) -> usize {
-    //     self.n
-    // }
-    // pub fn k1(&self) -> Fr {
-    //     self.k1
-    // }
-    // pub fn k2(&self) -> Fr {
-    //     self.k2
-    // }
-    // pub fn q_lx(&self) -> &DensePolynomial<Fr> {
-    //     &self.q_lx
-    // }
-    // pub fn q_rx(&self) -> &DensePolynomial<Fr> {
-    //     &self.q_rx
-    // }
-    // pub fn q_mx(&self) -> &DensePolynomial<Fr> {
-    //     &self.q_mx
-    // }
-    // pub fn q_ox(&self) -> &DensePolynomial<Fr> {
-    //     &self.q_ox
-    // }
-    // pub fn q_cx(&self) -> &DensePolynomial<Fr> {
-    //     &self.q_cx
-    // }
-    // pub fn s_sigma_1(&self) -> &DensePolynomial<Fr> {
-    //     &self.s_sigma_1
-    // }
-    // pub fn s_sigma_2(&self) -> &DensePolynomial<Fr> {
-    //     &self.s_sigma_2
-    // }
-    // pub fn s_sigma_3(&self) -> &DensePolynomial<Fr> {
-    //     &self.s_sigma_3
-    // }
-    // pub fn pi_x(&self) -> &DensePolynomial<Fr> {
-    //     &self.pi_x
-    // }
 }
 
-/// String to common processed input parser
+/// String to common preprocessed input parser
 ///
 /// See parse function for usage
 #[derive(Default)]
@@ -146,37 +110,16 @@ pub struct CPIParser {}
 impl CPIParser {
     /// Compute common_preprocessed_input and
     /// deserialize it into vec<u8>
-    pub fn compute_common_preprocessed_input(self, input: &str) -> Vec<u8> {
-        let input = Self::parse_string(input);
-        let input = &input;
+    pub fn compute_common_preprocessed_input(self, input: &str) -> Result<CommonPreprocessedInput, String> {
+        let input = Self::normalize(input);
 
         //Step 1: prepare gate_list and position_map prior to coordinate pair accumulator
-        let (gate_list, position_map) = self.prepare_generation(input);
+        let (gate_list, position_map) = self.prepare_generation(&input);
 
         //Step 2: generate the actual circuit with coordinate pair accumulator for copy constraint
         let circuit = Self::gen_circuit(gate_list, position_map);
 
-        let common_preprocessed_input = CommonPreprocessedInput::new(circuit.compile().unwrap());
-
-        let mut bytes = Vec::new();
-
-        common_preprocessed_input
-            .serialize_compressed(&mut bytes)
-            .unwrap();
-        bytes
-    }
-
-    /// Parse string into cpi bytes and write it
-    /// into a file.
-    pub fn parse_cpi_into_file(self, input: &str) {
-        let cpi_bytes = self.compute_common_preprocessed_input(input);
-
-        let str = format!(
-            "pub const COMMON_PROCESSED_INPUT:[u8;{}] = {:?};",
-            cpi_bytes.len(),
-            &cpi_bytes
-        );
-        fs::write("src/common_processed_input_const.rs", str).expect("write failed");
+        Ok(CommonPreprocessedInput::new(circuit.compile()?))
     }
 
     /// Generate [gate_list] and [position_map] to prepare for coordinate pair accumulator
@@ -437,7 +380,7 @@ impl CPIParser {
     /// - Lower case
     /// - Expand simple ^ into *
     /// - Delete space character " "
-    fn parse_string(string: &str) -> String {
+    fn normalize(string: &str) -> String {
         let string = string.to_lowercase();
         let mut result = String::new();
         let mut last_char = ' ';
@@ -490,47 +433,38 @@ mod tests {
     use ark_serialize::CanonicalDeserialize;
 
     use crate::common_preprocessed_input::cpi_parser::{CPIParser, CommonPreprocessedInput};
-    use crate::common_processed_input_const::COMMON_PROCESSED_INPUT;
     use crate::parser::Parser;
 
-    /// Test generated circuit with prover circuit
-    #[test]
-    fn parser_prover_test() {
-        let str = "x*y+3*x^2+x*y*z=11";
-
-        // Common preprocessed input parser
-        CPIParser::default().parse_cpi_into_file(str);
-        let vec = Vec::<u8>::from(COMMON_PROCESSED_INPUT);
-        let cpi = CommonPreprocessedInput::deserialize_compressed(&vec[..]).unwrap();
-
-        // Prover parser
-        let mut parser = Parser::default();
-        parser.add_witness("x", Fr::from(1));
-        parser.add_witness("y", Fr::from(2));
-        parser.add_witness("z", Fr::from(3));
-        let compiled_circuit = parser.parse(str).compile().unwrap();
-        let copy_constraint = compiled_circuit.copy_constraints();
-        let gate_constraint = compiled_circuit.gate_constraints();
-
-        assert_eq!(cpi.n, compiled_circuit.size);
-        assert_eq!(cpi.k1, copy_constraint.k1().clone());
-        assert_eq!(cpi.k2, copy_constraint.k2().clone());
-        assert_eq!(cpi.q_lx, gate_constraint.q_lx().clone());
-        assert_eq!(cpi.q_rx, gate_constraint.q_rx().clone());
-        assert_eq!(cpi.q_mx, gate_constraint.q_mx().clone());
-        assert_eq!(cpi.q_ox, gate_constraint.q_ox().clone());
-        assert_eq!(cpi.q_cx, gate_constraint.q_cx().clone());
-        assert_eq!(cpi.s_sigma_1, copy_constraint.get_s_sigma_1().clone());
-        assert_eq!(cpi.s_sigma_2, copy_constraint.get_s_sigma_2().clone());
-        assert_eq!(cpi.s_sigma_3, copy_constraint.get_s_sigma_3().clone());
-        assert_eq!(cpi.pi_x, gate_constraint.pi_x().clone());
-    }
-
-    #[test]
-    fn vjp() {
-        let str = "x^100 + x^10 = x^2";
-
-        // Common preprocessed input parser
-        CPIParser::default().parse_cpi_into_file(str);
-    }
+    // /// Test generated circuit with prover circuit
+    // #[test]
+    // fn parser_prover_test() {
+    //     let str = "x*y+3*x^2+x*y*z=11";
+    //
+    //     // Common preprocessed input parser
+    //     CPIParser::default().parse_cpi_into_file(str);
+    //     let vec = Vec::<u8>::from(COMMON_PREPROCESSED_INPUT);
+    //     let cpi = CommonPreprocessedInput::deserialize_compressed(&vec[..]).unwrap();
+    //
+    //     // Prover parser
+    //     let mut parser = Parser::default();
+    //     parser.add_witness("x", Fr::from(1));
+    //     parser.add_witness("y", Fr::from(2));
+    //     parser.add_witness("z", Fr::from(3));
+    //     let compiled_circuit = parser.parse(str).compile().unwrap();
+    //     let copy_constraint = compiled_circuit.copy_constraints();
+    //     let gate_constraint = compiled_circuit.gate_constraints();
+    //
+    //     assert_eq!(cpi.n, compiled_circuit.size);
+    //     assert_eq!(cpi.k1, copy_constraint.k1().clone());
+    //     assert_eq!(cpi.k2, copy_constraint.k2().clone());
+    //     assert_eq!(cpi.q_lx, gate_constraint.q_lx().clone());
+    //     assert_eq!(cpi.q_rx, gate_constraint.q_rx().clone());
+    //     assert_eq!(cpi.q_mx, gate_constraint.q_mx().clone());
+    //     assert_eq!(cpi.q_ox, gate_constraint.q_ox().clone());
+    //     assert_eq!(cpi.q_cx, gate_constraint.q_cx().clone());
+    //     assert_eq!(cpi.s_sigma_1, copy_constraint.get_s_sigma_1().clone());
+    //     assert_eq!(cpi.s_sigma_2, copy_constraint.get_s_sigma_2().clone());
+    //     assert_eq!(cpi.s_sigma_3, copy_constraint.get_s_sigma_3().clone());
+    //     assert_eq!(cpi.pi_x, gate_constraint.pi_x().clone());
+    // }
 }

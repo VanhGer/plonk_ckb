@@ -1,0 +1,42 @@
+[package]
+name = "cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "verifier_gen"
+path = "src/bin/verifier.rs"
+
+[[bin]]
+name = "srs_gen"
+path = "src/bin/srs.rs"
+
+#[[bin]]
+#name = "prover"
+#path = "src/bin/prover.rs"
+
+[dependencies]
+plonk = { version = "0.1.0", path = "../plonk" }
+kzg = { version = "0.1.0", path = "../kzg" }
+clap = { version = "4.5.4", features = ["derive"] }
+include_dir = { version = "0.7.3" }
+ark-serialize = { version = "0.4.2" }
+bytes = "1.6.0"
+ckb-sdk = "3.2.0"
+ckb-types = "0.116.1"
+serde_json = "1.0.117"
+secp256k1 = "0.24"
+ckb-jsonrpc-types = "0.116.1"
+ckb-hash = "0.116.1"
+hex-string = "0.1.0"
+ark-ff = "0.4.2"
+ark-poly = "0.4.2"
+ark-ec = "0.4.2"
+ark-bls12-381 = "0.4.0"
+ark-std = "0.4.0"
+sha2 = "0.10"
+rand = "0.8.5"
+toml = "0.8.13"
+serde = { version = "1.0.203", features = ["derive"] }
+config = "0.14.0"
+glob = "0.3.1"
