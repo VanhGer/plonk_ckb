@@ -21,13 +21,21 @@ pub fn plonk_verify<T: Digest + Default>(
 
     // Commit to various polynomials
     let com_q_m = scheme.commit(&cip.q_mx);
+    debug!("commit");
     let com_q_l = scheme.commit(&cip.q_lx);
+    debug!("commit");
     let com_q_r = scheme.commit(&cip.q_rx);
+    debug!("commit");
     let com_q_o = scheme.commit(&cip.q_ox);
+    debug!("commit");
     let com_q_c = scheme.commit(&cip.q_cx);
+    debug!("commit");
     let com_s_sigma_1 = scheme.commit(&cip.s_sigma_1);
+    debug!("commit");
     let com_s_sigma_2 = scheme.commit(&cip.s_sigma_2);
+    debug!("commit");
     let com_s_sigma_3 = scheme.commit(&cip.s_sigma_3);
+    debug!("commit");
 
     debug!("verify challenge");
 
@@ -121,7 +129,7 @@ pub fn plonk_verify<T: Digest + Default>(
     // Compute the left side of the pairing equation
     let pairing_left_side = Bls12_381::pairing(
         (proof.w_ev_x_commit.clone() + proof.w_ev_wx_commit.clone().mul(u)).0,
-        srs.g2s(),
+        scheme.g2s(),
     );
 
     debug!("Compute right side of pairing");
@@ -136,7 +144,7 @@ pub fn plonk_verify<T: Digest + Default>(
             + f
             - e)
             .0,
-        srs.g2(),
+        scheme.g2(),
     );
 
     debug!("Check pairing");
