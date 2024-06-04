@@ -2,9 +2,9 @@ use ark_bls12_381::Fr;
 use ark_serialize::*;
 use ckb_testtool::ckb_types::prelude::{Builder, Entity};
 use sha2::Sha256;
+use kzg::srs::Srs;
 
 use plonk::prover;
-
 use crate::utils::proving_test;
 
 // use ckb_tool::ckb_types::{
@@ -15,7 +15,7 @@ use crate::utils::proving_test;
 // };
 
 pub(crate) const MAX_CYCLES: u64 = 3_500_000_000;
-
+const SRS: &[u8] = include_bytes!("../srs.bin");
 
 #[test]
 fn test_plonk_contract() {
@@ -23,21 +23,22 @@ fn test_plonk_contract() {
     use plonk::parser::Parser;
 
     let mut parser = Parser::default();
-    parser.add_witness("x", Fr::from(3));
-    parser.add_witness("y", Fr::from(2));
-    parser.add_witness("z", Fr::from(5));
+    parser.add_witness("x", Fr::from(2));
+    parser.add_witness("y", Fr::from(4));
+
+    let srs = Srs::deserialize_uncompressed_unchecked(SRS).unwrap();
 
     // generate proof
-    let compiled_circuit = parser.parse("x + y + z*z = 30").compile().unwrap();
-    let proof = prover::generate_proof::<Sha256>(&compiled_circuit);
+    let compiled_circuit = parser.parse("x * y + x = 10").compile().unwrap();
+    let proof = prover::generate_proof::<Sha256>(&compiled_circuit, srs);
 
     let mut proof_bytes = Vec::new();
-    proof.serialize_compressed(&mut proof_bytes).unwrap();
+    proof.serialize_uncompressed(&mut proof_bytes).unwrap();
     proving_test(
         proof_bytes.into(),
-        "plonk_verifier",
+        "abc",
         "plonk_verifier verify",
     );
 
-    assert_eq!(1, 2);
+    // assert_eq!(1, 2);
 }

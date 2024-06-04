@@ -28,8 +28,7 @@ Then, make sure that you have all tools:
 - [Clang 16+](https://releases.llvm.org/16.0.0/tools/clang/docs/ReleaseNotes.html)
 - [Rust](https://www.rust-lang.org/)
 - [Cargo-generate](https://github.com/cargo-generate/cargo-generate)
-
-
+- gcc-riscv64-unknown-elf
 ## Usage
 
 You should read the usage of this project [here](./document/usage.md).
@@ -43,7 +42,7 @@ You should read the usage of this project [here](./document/usage.md).
 
 ## Benchmarks
 
-You can see our benchmarks [here](../document/benchmarks.md).
+You can see our benchmarks [here](./document/benchmarks.md).
 
 ## Contributing
 
