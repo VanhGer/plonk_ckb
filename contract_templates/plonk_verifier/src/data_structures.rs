@@ -65,18 +65,31 @@ impl KzgScheme {
     }
 
     fn evaluate_in_s(&self, polynomial: &Poly) -> G1Point {
-        let g1_points = self.0.g1_points.clone();
+        let g1_points = self.0.g1_points();
         assert!(g1_points.len() > polynomial.degree());
+        let poly = &polynomial.coeffs;
 
-        let poly = polynomial.coeffs.iter();
-        let g1_points = g1_points.into_iter();
-        let point: G1Point = poly
-            .zip(g1_points)
-            .map(|(cof, s)| s.mul(cof).into_affine())
-            .reduce(|acc, e| acc.add(e).into_affine())
-            .unwrap_or(G1Point::zero());
-        point
+        let mut res = G1Point::zero().mul(Fr::from(1));
+        for i in 0..poly.len() {
+            let coef = poly[i];
+            if coef == Fr::from(0) {
+                continue;
+            }
+            let point = g1_points[i];
+
+            res = res.add(point.mul(coef));
+        }
+        res.into_affine()
     }
+
+    pub fn g2(&self) -> G2Point {
+        self.0.g2()
+    }
+    pub fn g2s(&self) -> G2Point {
+        self.0.g2s()
+    }
+
+
 }
 
 #[derive(CanonicalDeserialize, CanonicalSerialize)]
