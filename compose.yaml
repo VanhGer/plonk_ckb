@@ -1,0 +1,9 @@
+services:
+  plonk-verifier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - ckb
+networks:
+  ckb:

@@ -41,6 +41,10 @@ You should read the usage of this project [here](./document/usage.md).
 - [x] Generate proof off-chain and verify it on-chain.
 - [ ] Connect to [StarkNet](https://www.starknet.io/).
 
+## Example
+
+You can see our cli example [here](../document/README.md)
+
 ## Benchmarks
 
 You can see our benchmarks [here](../document/benchmarks.md).
