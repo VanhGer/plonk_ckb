@@ -49,6 +49,7 @@ run_process() {
         gen-verifier)
             CRATE="$1"
             EQUATION="$2"
+
             if [ -z "$CRATE" ] || [ -z "$EQUATION" ]; then
                 echo "Error: Missing arguments for 'gen-verifier' command"
                 show_help
@@ -60,6 +61,7 @@ run_process() {
             CRATE="$1"
             EQUATION="$2"
             WITNESSES="$3"
+
             if [ -z "$CRATE" ] || [ -z "$EQUATION" ] || [ -z "$WITNESSES" ]; then
                 echo "Error: Missing arguments for 'prover' command"
                 show_help
@@ -95,15 +97,17 @@ check_cli_exist() {
 
 run_gen_srs() {
     echo "Generating structured reference string via trusted setup"
-    rm -Rf debug/"$CRATE"
-    mkdir -p debug/"$CRATE"
-    srs_gen --size "$SRS_SIZE" --output debug/"$CRATE"/srs.bin
+    rm debug/srs.bin
+    srs_gen --size "$SRS_SIZE" --output debug/srs.bin
     echo ""
 }
 
 
 run_gen_verifier() {
     echo "Building verifier_contracts"
+    rm -rf debug/"$CRATE"
+    mkdir -p debug/"$CRATE"
+    cp debug/srs.bin debug/"$CRATE"/srs.bin
     verifier_gen --crate-name "$CRATE" --srs debug/"$CRATE"/srs.bin --output debug/"$CRATE"/verifier_contracts --equation "$EQUATION"
     export CUSTOM_RUSTFLAGS="--cfg debug_assertions"
     cd debug/"$CRATE"/verifier_contracts && make build
