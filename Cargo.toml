@@ -3,7 +3,7 @@ resolver = "2"
 
 members = [
     "contract_templates/*",
-    "tests",
+    "benchmark",
     "plonk",
     "kzg",
     "cli",

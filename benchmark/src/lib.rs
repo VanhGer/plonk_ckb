@@ -4,17 +4,12 @@ use std::path::PathBuf;
 use std::str::FromStr;
 
 use ckb_testtool::{
-    ckb_error::Error,
     ckb_types::{
         bytes::Bytes,
-        core::{Cycle, TransactionView},
     },
-    context::Context,
 };
 
-#[cfg(test)]
-pub mod tests;
-mod utils;
+pub mod utils;
 
 // The exact same Loader code from capsule's template, except that
 // now we use MODE as the environment variable
@@ -63,9 +58,9 @@ impl Loader {
             }
             Err(_) => {
                 let mut base_path = PathBuf::new();
-                // cargo may use a different cwd when running tests, for example:
+                // cargo may use a different cwd when running benchmark, for example:
                 // when running debug in vscode, it will use workspace root as cwd by default,
-                // when running test by `cargo test`, it will use tests directory as cwd,
+                // when running test by `cargo test`, it will use benchmark directory as cwd,
                 // so we need a fallback path
                 base_path.push("build");
                 if !base_path.exists() {
@@ -90,25 +85,4 @@ impl Loader {
         }
         result.unwrap().into()
     }
-}
-
-// This helper method runs Context::verify_tx, but in case error happens,
-// it also dumps current transaction to failed_txs folder.
-pub fn verify_and_dump_failed_tx(
-    context: &Context,
-    tx: &TransactionView,
-    max_cycles: u64,
-) -> Result<Cycle, Error> {
-    let result = context.verify_tx(tx, max_cycles);
-    if result.is_err() {
-        let mut path = env::current_dir().expect("current dir");
-        path.push("failed_txs");
-        std::fs::create_dir_all(&path).expect("create failed_txs dir");
-        let mock_tx = context.dump_tx(tx).expect("dump failed tx");
-        let json = serde_json::to_string_pretty(&mock_tx).expect("json");
-        path.push(format!("0x{:x}.json", tx.hash()));
-        println!("Failed tx written to {:?}", path);
-        std::fs::write(path, json).expect("write");
-    }
-    result
 }

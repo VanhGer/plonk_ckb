@@ -1,11 +1,12 @@
-use ark_serialize::CanonicalSerialize;
 use std::fs;
 use std::fs::File;
 use std::io::Write;
+use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
+use ark_serialize::CanonicalSerialize;
 use clap::Parser;
-use include_dir::{include_dir, Dir, DirEntry};
+use include_dir::{Dir, DirEntry, include_dir};
 use toml::Value;
 
 use plonk::common_preprocessed_input::cpi_parser::CPIParser;
@@ -66,6 +67,12 @@ fn main() -> Result<(), std::io::Error> {
 
     // Replace the package name in Cargo.toml
     replace_package_name(output_path, &args.crate_name);
+
+    // Fix the permission problem with find_clang script
+    let find_clang_path = output_path.join("scripts").join("find_clang");
+    let mut permissions = fs::metadata(&find_clang_path)?.permissions();
+    permissions.set_mode(0o755); // rwxr-xr-x
+    fs::set_permissions(&find_clang_path, permissions)?;
 
     // Write the CPI bytes to a file
     let cpi_file_path = output_path.join("src/cpi.bin");
