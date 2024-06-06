@@ -34,13 +34,11 @@ run_process() {
     COMMAND="$1"
 
     shift
-    SRS_SIZE="$1"
-    CRATE="$2"
-    EQUATION="$3"
-    WITNESSES="$4"
 
     case "$COMMAND" in
         gen-srs)
+            SRS_SIZE="$1"
+
             if [ -z "$SRS_SIZE" ]; then
                 echo "Error: Missing arguments for 'run' command"
                 show_help
@@ -49,6 +47,8 @@ run_process() {
             run_gen_srs "$@"
             ;;
         gen-verifier)
+            CRATE="$1"
+            EQUATION="$2"
             if [ -z "$CRATE" ] || [ -z "$EQUATION" ]; then
                 echo "Error: Missing arguments for 'gen-verifier' command"
                 show_help
@@ -57,6 +57,9 @@ run_process() {
             run_gen_verifier "$@"
             ;;
         prover)
+            CRATE="$1"
+            EQUATION="$2"
+            WITNESSES="$3"
             if [ -z "$CRATE" ] || [ -z "$EQUATION" ] || [ -z "$WITNESSES" ]; then
                 echo "Error: Missing arguments for 'prover' command"
                 show_help
