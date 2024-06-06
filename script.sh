@@ -38,11 +38,6 @@ run_process() {
     CRATE="$2"
     EQUATION="$3"
     WITNESSES="$4"
-    RPC="$5"
-
-    if [ -z "$RPC" ]; then
-        RPC="http://127.0.0.1:8114"
-    fi
 
     case "$COMMAND" in
         gen-srs)
@@ -54,7 +49,7 @@ run_process() {
             run_gen_srs "$@"
             ;;
         gen-verifier)
-            if [ -z "$CRATE" ] || [ -z "$EQUATION" ] || [ -z "$WITNESSES" ]; then
+            if [ -z "$CRATE" ] || [ -z "$EQUATION" ]; then
                 echo "Error: Missing arguments for 'gen-verifier' command"
                 show_help
                 exit 1
@@ -132,7 +127,7 @@ run_prover() {
     cat <<EOL > "$output_file"
 sender_key = "ace08599f3174f4376ae51fdc30950d4f2d731440382bb0aa1b6b0bd3a9728cd"
 receiver = "ckt1qzda0cr08m85hc8jlnfp3zer7xulejywt49kt2rr0vthywaa50xwsqvm52pxjfczywarv63fmjtyqxgs2syfffq2348ad"
-ckb_rpc = "$RPC"
+ckb_rpc = "http://127.0.0.1:8114"
 equation = "$EQUATION"
 verifier_code_hash = "$code_hash"
 tx_hash = "$tx_hash"
