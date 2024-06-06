@@ -1,0 +1,71 @@
+name: Docker build
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  cargo-check:
+    name: Cargo check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - uses: actions-rs/cargo@v1
+        with:
+          command: check
+
+  fmt-check:
+    name: Rust fmt
+    runs-on:
+      group: Default
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - run: rustup component add rustfmt
+      - uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --all -- --check
+
+  test-and-coverage:
+    name: Test and Coverage
+    runs-on:
+      group: Default
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+
+      - name: Install dependencies
+        run: |
+          #          apt install libssl-dev
+               rustup self update
+               rustup update
+               cargo install cargo-tarpaulin
+
+      - name: Run tests with coverage
+        run: cargo tarpaulin --all-features --verbose
+  build-docker-image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out from Git
+        uses: actions/checkout@v4
+
+      - name: Build docker image
+        run: |
+          docker build .
