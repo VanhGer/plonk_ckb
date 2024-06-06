@@ -51,7 +51,7 @@ pub fn build_test_context(proof_file: Bytes, contract: &str) -> (Context, Transa
     (context, tx, contract_size)
 }
 
-pub fn proving_test(proof: Bytes, contract: &str) -> (ckb_testtool::ckb_types::core::Cycle, usize) {
+pub fn contract_test(proof: Bytes, contract: &str) -> (ckb_testtool::ckb_types::core::Cycle, usize) {
     let (mut context, tx, size) = build_test_context(proof, contract);
     let tx = context.complete_tx(tx);
     let cycles = context.verify_tx(&tx, MAX_CYCLES).unwrap();

@@ -12,18 +12,38 @@ Before you begin, ensure you have met the following requirements:
 
 Follow these steps to run the project:
 
-1. **(Optional) Build the docker file**:
-   Open your terminal and navigate to the directory containing the Docker file. Run the following command to build the image:
-   ```sh
-   docker build -t zkp_ckb_tool .
-   ```
-2. **(Optional) Spawn the container**:
-   Run the following command to spawn and then access its terminal:
-    ```sh
-    docker run -d --name=zkp_ckb_tool_container zkp_ckb_tool
-    docker exec -it zkp_ckb_tool_container /bin/bash
-    ```
-3. The full flow contains 3 phases:
+1. **Setup running environment**
+   - **Using docker**
+      1. **Build the docker file**:
+         Open your terminal and navigate to the directory containing the Docker file. Run the following command to build the image:
+         ```sh
+         docker build -t zkp_ckb_tool .
+         ```
+     2. **Spawn the container**:
+         Run the following command to spawn and then access its terminal:
+          ```sh
+          docker run -d --name=zkp_ckb_tool_container zkp_ckb_tool
+          docker exec -it zkp_ckb_tool_container /bin/bash
+          ```
+   - **Using local**
+     1. **Install offckb**:
+        ```sh
+        npm install -g @offckb/cli
+        ```
+     2. **Run offckb**:
+        ```sh
+        offckb node
+        ```
+     3. **Install CLI tools**:
+        ```sh
+        cargo install --git https://github.com/VanhGer/plonk_ckb/ cli --branch main
+        ```
+     4. **Download and set permissions for the script**:
+        ```sh
+        curl -o ./script.sh https://raw.githubusercontent.com/VanhGer/plonk_ckb/main/script.sh
+        chmod 755 ./script.sh
+        ```
+2. **The full flow contains 3 phases**:
    - Generate trusted setup: this will generate common parameters that both prover and verifier need to know about.
    ```
     ./script.sh gen-srs <size-of-srs> 

@@ -10,7 +10,7 @@ use serde_json::to_string;
 use sha2::Sha256;
 use tempfile::tempdir;
 
-use benchmark::utils::proving_test;
+use benchmark::utils::contract_test;
 use kzg::srs::Srs;
 use plonk::parser::Parser;
 use plonk::prover;
@@ -74,7 +74,7 @@ fn main() {
             let mut cycle_results = vec![];
 
             for _ in 0..iterations {
-                let (cycle, size) = test_with_params(
+                let (cycle, size) = test_contract_with_params(
                     dir_path,
                     crate_name,
                     &srs_out_path,
@@ -131,7 +131,7 @@ fn generate_srs(dir_path: &Path, srs_size: i32, srs_out_path: &PathBuf) {
 ///
 /// # Returns
 /// A tuple containing the cycle count and the binary size.
-fn test_with_params(
+fn test_contract_with_params(
     dir_path: &Path,
     crate_name: &str,
     srs_out_path: &PathBuf,
@@ -142,6 +142,7 @@ fn test_with_params(
     let equation = format!("x^{}=1", circuit_size);
     let witness = "x=1";
 
+    //Generate contract binary
     generate_verifier_contract(dir_path, crate_name, srs_out_path, &equation, verifier_contract_path);
     build_verifier_contract(verifier_contract_path);
 
@@ -154,7 +155,7 @@ fn test_with_params(
     let mut proof_bytes = Vec::new();
     proof.serialize_uncompressed(&mut proof_bytes).unwrap();
 
-    proving_test(proof_bytes.into(), verifier_contract_built_path.to_str().unwrap())
+    contract_test(proof_bytes.into(), verifier_contract_built_path.to_str().unwrap())
 }
 
 /// Generates the verifier contract.
