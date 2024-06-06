@@ -1,4 +1,4 @@
-# Project Name
+# Plonk CKB
 
 ## Quick start
 
@@ -12,12 +12,12 @@ Before you begin, ensure you have met the following requirements:
 
 Follow these steps to run the project:
 
-1. **Build the docker file**:
+1. **(Optional) Build the docker file**:
    Open your terminal and navigate to the directory containing the Docker file. Run the following command to build the image:
    ```sh
    docker build -t zkp_ckb_tool .
    ```
-2. **Spawn the container**:
+2. **(Optional) Spawn the container**:
    Run the following command to spawn and then access its terminal:
     ```sh
     docker run -d --name=zkp_ckb_tool_container zkp_ckb_tool
@@ -31,7 +31,7 @@ Follow these steps to run the project:
    ```
    - Generate the verifier contract and then deploy it.
    ```
-   ./script.sh gen-verifier <contract-name> <equation> <witnesses> [optional] <rpc-ckb>
+   ./script.sh gen-verifier <contract-name> <equation> [optional] <rpc-ckb>
 
    ```
    - Generate ZK proof and submit the proof to the verifier contract to verify it.
@@ -50,7 +50,9 @@ Follow these steps to run the project:
 Here is an example of how to run the verifier script inside the Docker container:
 1. **Run the Verifier with parameters**:
    ```sh
-   docker compose exec -it plonk-verifier ./script.sh run 1024 plonk_verifier "x^3 + x + 5 = 35" "x=3" "http://127.0.0.1:8114"
+   ./script.sh gen-srs 1024
+   ./script.sh gen-verifier plonk_verifier "x^3 + x + 5 = 35" "x=3"
+   ./script.sh prover plonk_verifier "x^3 + x + 5 = 35" "x=3"
    ```
    This command will run the script.sh with the provided parameters, which will configure the verifier to check the equation x^3 + x + 5 = 35 with x = 3 and connect to the specified URL.
 

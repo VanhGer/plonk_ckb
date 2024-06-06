@@ -66,7 +66,7 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 ## Contact
 
-Your Name - [@vanhg](https://twitter.com/vanhger) - vietanhpg2003@gmail.com
+VanhGer - [@vanhg](https://twitter.com/vanhger) - vietanhpg2003@gmail.com
 
 
 ## Acknowledgments
