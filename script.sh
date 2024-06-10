@@ -97,7 +97,7 @@ check_cli_exist() {
 
 run_gen_srs() {
     echo "Generating structured reference string via trusted setup"
-    rm debug/srs.bin
+    rm debug/srs.bin ||:
     srs_gen --size "$SRS_SIZE" --output debug/srs.bin
     echo ""
 }

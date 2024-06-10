@@ -7,6 +7,7 @@ TOP := $(cur_dir)
 # while we enable debug logs by default here, some might want to strip them
 # for minimal code size / consumed cycles.
 # CUSTOM_RUSTFLAGS := --cfg debug_assertions
+#-Clink-arg=-fuse-ld=lld -Clink-arg=-Wl,--no-rosegment
 # RUSTFLAGS that are less likely to be tweaked by developers. Most likely
 # one would want to keep the default values here.
 FULL_RUSTFLAGS := -C target-feature=+zba,+zbb,+zbc,+zbs $(CUSTOM_RUSTFLAGS)

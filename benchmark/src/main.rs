@@ -212,15 +212,14 @@ fn build_verifier_contract(verifier_contract_path: &PathBuf) {
 /// Sets up the environment by building the project.
 fn setup() {
     let install_output = Command::new("make")
-        .current_dir(Path::new(".."))
         .arg("install")
         .output()
         .expect("Failed to build the project");
 
     if !install_output.status.success() {
-        eprintln!("Build failed with error: {}\n", String::from_utf8_lossy(&install_output.stderr));
+        eprintln!("Install failed with error: {}\n", String::from_utf8_lossy(&install_output.stderr));
     } else {
-        println!("Build succeeded with output: {}\n", String::from_utf8_lossy(&install_output.stderr));
+        println!("Install succeeded with output: {}\n", String::from_utf8_lossy(&install_output.stderr));
     }
 }
 

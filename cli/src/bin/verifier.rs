@@ -4,12 +4,14 @@ use std::io::Write;
 use std::os::unix::fs::PermissionsExt;
 use std::path::Path;
 
-use ark_serialize::CanonicalSerialize;
+use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 use clap::Parser;
 use include_dir::{Dir, DirEntry, include_dir};
 use toml::Value;
 
-use plonk::common_preprocessed_input::cpi_parser::CPIParser;
+use kzg::scheme::KzgScheme;
+use kzg::srs::Srs;
+use plonk::common_preprocessed_input::cpi_parser::CPIGenerator;
 
 static ASSETS_DIR: Dir = include_dir!("$CARGO_MANIFEST_DIR/../contract_templates/plonk_verifier");
 
@@ -49,8 +51,11 @@ fn main() -> Result<(), std::io::Error> {
         args.equation
     );
 
-    let cpi = CPIParser::default()
-        .compute_common_preprocessed_input(&args.equation)
+    let src = Path::new(&args.srs);
+    let srs = Srs::deserialize_uncompressed_unchecked(&fs::read(src).unwrap()[..]).unwrap();
+    let scheme = KzgScheme::new(srs);
+    let cpi = CPIGenerator::default()
+        .compute_common_preprocessed_input(&args.equation, scheme)
         .expect("Failed to compute CPI");
     let mut cpi_bytes = Vec::new();
     cpi.serialize_uncompressed(&mut cpi_bytes)
@@ -80,7 +85,6 @@ fn main() -> Result<(), std::io::Error> {
     file.write_all(&cpi_bytes)?;
 
     // Copy the SRS binary to the output path
-    let src = Path::new(&args.srs);
     let srs_dest = output_path.join("src/srs.bin");
     fs::copy(src, &srs_dest)?;
 

@@ -2,8 +2,6 @@ use alloc::vec::Vec;
 use core::ops::{Add, Mul, Neg, Sub};
 
 use ark_bls12_381::{Fr, G1Affine, G2Affine};
-use ark_ec::{AffineRepr, CurveGroup};
-use ark_poly::Polynomial;
 use ark_poly::univariate::DensePolynomial;
 use ark_serialize::{CanonicalDeserialize, CanonicalSerialize};
 
@@ -12,9 +10,6 @@ pub type G1Point = G1Affine;
 
 /// Type alias for G2 affine points.
 pub type G2Point = G2Affine;
-
-/// Type alias for dense polynomials over Fr.
-pub type Poly = DensePolynomial<Fr>;
 
 /// A structured reference string (SRS) used in the KZG commitment scheme.
 #[derive(Debug, Clone, CanonicalDeserialize, CanonicalSerialize)]
@@ -42,15 +37,15 @@ pub struct CommonPreprocessedInput {
     pub n: usize,
     pub k1: Fr,
     pub k2: Fr,
-    pub q_lx: Poly,
-    pub q_rx: Poly,
-    pub q_mx: Poly,
-    pub q_ox: Poly,
-    pub q_cx: Poly,
-    pub s_sigma_1: Poly,
-    pub s_sigma_2: Poly,
-    pub s_sigma_3: Poly,
-    pub pi_x: Poly,
+    pub com_q_lx: KzgCommitment,
+    pub com_q_rx: KzgCommitment,
+    pub com_q_mx: KzgCommitment,
+    pub com_q_ox: KzgCommitment,
+    pub com_q_cx: KzgCommitment,
+    pub com_s_sigma_1: KzgCommitment,
+    pub com_s_sigma_2: KzgCommitment,
+    pub com_s_sigma_3: KzgCommitment,
+    pub pi_x: DensePolynomial<Fr>,
 }
 
 /// A struct representing the KZG commitment scheme.
@@ -70,20 +65,6 @@ impl KzgScheme {
         Self(srs)
     }
 
-    /// Commits to a polynomial using the SRS.
-    ///
-    /// # Arguments
-    ///
-    /// * `polynomial` - A reference to the polynomial to commit to.
-    ///
-    /// # Returns
-    ///
-    /// A KZG commitment to the polynomial.
-    pub fn commit(&self, polynomial: &Poly) -> KzgCommitment {
-        let commitment = self.evaluate_in_s(polynomial);
-        KzgCommitment(commitment)
-    }
-
     /// Commits to a scalar using the SRS.
     ///
     /// # Arguments
@@ -97,33 +78,6 @@ impl KzgScheme {
         let g1_0 = *self.0.g1_points.first().unwrap();
         let commitment = g1_0.mul(para).into();
         KzgCommitment(commitment)
-    }
-
-    /// Evaluates a polynomial at the SRS point.
-    ///
-    /// # Arguments
-    ///
-    /// * `polynomial` - A reference to the polynomial to evaluate.
-    ///
-    /// # Returns
-    ///
-    /// A G1 affine point representing the evaluation of the polynomial.
-    fn evaluate_in_s(&self, polynomial: &Poly) -> G1Point {
-        let g1_points = &self.0.g1_points;
-        assert!(g1_points.len() > polynomial.degree());
-        let poly = &polynomial.coeffs;
-
-        let mut res = G1Point::zero().mul(Fr::from(1));
-        for i in 0..poly.len() {
-            let coef = poly[i];
-            if coef == Fr::from(0) {
-                continue;
-            }
-            let point = g1_points[i];
-
-            res = res.add(point.mul(coef));
-        }
-        res.into_affine()
     }
 
     pub fn g2(&self) -> G2Point {
